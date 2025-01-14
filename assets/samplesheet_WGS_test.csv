@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2,bed_file,reference
+SAMPLE1_PAIRED_END_TUMOR_1,read1.fastq.gz,read2.fastq.gz,,GRCh37
+SAMPLE1_PAIRED_END_TUMOR_1,read1.fastq.gz,read2.fastq.gz,,GRCh37
+SAMPLE1_PAIRED_END_NORMAL_2,read1.fastq.gz,read2.fastq.gz,,GRCh37

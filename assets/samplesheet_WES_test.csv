@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2,bed_file,reference
+SAMPLE1_PAIRED_END_TUMOR,read1.fastq.gz,read2.fastq.gz,TruSeq_exome_targeted_regions.hg19.bed,GRCh37
+SAMPLE1_PAIRED_END_TUMOR,read1.fastq.gz,read2.fastq.gz,TruSeq_exome_targeted_regions.hg19.bed,GRCh37
+SAMPLE1_PAIRED_END_NORMAL,read1.fastq.gz,read2.fastq.gz,TruSeq_exome_targeted_regions.hg19.bed,GRCh37
