@@ -172,6 +172,8 @@ workflow GRZQC {
         ch_cat_fastq
     )
 
+    // TODO : Adapter triiming module implement here (fastp)
+
     FASTQ_ALIGN_BWA (
         ch_cat_fastq, ch_bwa_index, true, ch_fasta
     )
@@ -192,8 +194,11 @@ workflow GRZQC {
 
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions.first())
 
+    // TODO : Fraction of selected regions meeting minimum sequencing depth (selected regions: 400 representative genes)
+    // TODO : inputs -> selected regions bed file, minimum sequencing depth (coming from BfArM requirements)
+
     //
-    // MODULE: Compare coverage
+    // MODULE: Compare coverage : writing the results file
     //
     COMPARE_COVERAGE(
         MOSDEPTH.out.summary_txt
