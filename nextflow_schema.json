@@ -79,6 +79,30 @@
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
                     "default": "s3://ngi-igenomes/igenomes/"
+                },
+                "bwa_index_37": {
+                    "type": "string",
+                    "description": "Path to the grc37 bwa index.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to the grc37 bwa index."
+                },
+                "fasta_37": {
+                    "type": "string",
+                    "description": "Path to the grc37 bwa index.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to the grc37 bwa index."
+                },
+                "bwa_index_38": {
+                    "type": "string",
+                    "description": "Path to the grc37 bwa index.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to the grc37 bwa index."
+                },
+                "fasta_38": {
+                    "type": "string",
+                    "description": "Path to the grc37 bwa index.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to the grc37 bwa index."
                 }
             }
         },
