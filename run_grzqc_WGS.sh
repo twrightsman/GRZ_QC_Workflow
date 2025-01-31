@@ -2,7 +2,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=32
 
-submission_base_path=/s/public_webshare/public/grz-example-submissions/WES/
+submission_base_path=/s/public_webshare/public/grz-example-submissions/WGS/
 output_path=/data/ceph/ssd/scratch/tmp/wayu0/grz_qc_workflow/
 mkdir -p $output_path"/grzqc_output/"
 

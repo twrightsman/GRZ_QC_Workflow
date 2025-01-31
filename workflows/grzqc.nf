@@ -10,7 +10,8 @@ include { BWA_INDEX              } from '../modules/nf-core/bwa/index/main'
 include { FASTQ_ALIGN_BWA        } from '../subworkflows/nf-core/fastq_align_bwa/main'
 include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX         } from '../modules/nf-core/samtools/index/main'
-include { MOSDEPTH               } from '../modules/nf-core/mosdepth/main'
+include { MOSDEPTH as MOSDEPTH_all_genes   } from '../modules/nf-core/mosdepth/main'
+include { MOSDEPTH as MOSDEPTH_rep_genes   } from '../modules/nf-core/mosdepth/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
@@ -42,7 +43,7 @@ process COMPARE_COVERAGE {
     debug true
  
     input:
-    tuple val(meta), path(summary)
+    tuple val(meta), path(summary1),path(summary2)
  
     output:
     path('*.result.txt')      , emit: result_txt
@@ -74,13 +75,19 @@ process COMPARE_COVERAGE {
     fi
 
     # Extract the mean coverage from the "total" row of the mosdepth file
-    mosdepth_cov=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total" {print \$col}' ${summary}) 
-    echo "Sample_id,Mosdepth_cov,Required_cov,Qualtiy_check" >> ${prefix}.result.txt
-    echo "\$mosdepth_cov >= \$required_coverage" | bc -l
-    if (( \$(echo "\$mosdepth_cov >= \$required_coverage" | bc -l) )); then
-        echo "${meta.id},\$mosdepth_cov,\$required_coverage,PASS" >> ${prefix}.result.txt
+    if [[ "${meta.id}" =~ (WES|wes) ]]; then
+        mosdepth_cov_1=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total_region" {print \$col}' ${summary1}) 
     else
-        echo "${meta.id},\$mosdepth_cov,\$required_coverage,FAIL" >> ${prefix}.result.txt
+        mosdepth_cov_1=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total" {print \$col}' ${summary1}) 
+    fi
+
+    mosdepth_cov_2=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total_region" {print \$col}' ${summary2}) 
+    echo "Sample_id,Mosdepth_cov_all_genes, Mosdepth_cov_rep_genes,Required_cov,Qualtiy_check" >> ${prefix}.result.txt
+    echo "\$mosdepth_cov_2 >= \$required_coverage" | bc -l
+    if (( \$(echo "\$mosdepth_cov_2 >= \$required_coverage" | bc -l) )); then
+        echo "${meta.id},\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,PASS" >> ${prefix}.result.txt
+    else
+        echo "${meta.id},\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,FAIL" >> ${prefix}.result.txt
     fi
     """
 }
@@ -134,6 +141,25 @@ workflow GRZQC {
         ch_bwa_index
     }
 
+    // Create bed channels for Mosdepth on ~ 400 representative genes
+    ch_samplesheet.map{
+        meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
+    }.branch {
+            meta, reference ->
+                rep_genes_hg19  : reference == "GRCh37"
+                    return [ meta, params.rep_genes_hg19 ]
+                rep_genes_hg38  : reference == "GRCh38"
+                    return [ meta, params.rep_genes_hg38 ]
+        }.set{
+        ch_rep_genes_by_ref
+        }
+
+    ch_rep_genes_by_ref.rep_genes_hg19.mix(
+        ch_rep_genes_by_ref.rep_genes_hg38
+    ).set{
+        ch_rep_genes
+    }
+
     // Create fasta channels for BWA_MEM
     ch_samplesheet.map{
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
@@ -154,6 +180,7 @@ workflow GRZQC {
         ch_fasta
     }
 
+
     //
     // MODULE: Concatenate FastQ files from same sample if required
     //
@@ -172,7 +199,7 @@ workflow GRZQC {
         ch_cat_fastq
     )
 
-    // TODO : Adapter triiming module implement here (fastp)
+    // TODO : Adapter triiming module implement here (fastp) We can maybe drop FastQC because fastp already implements the calculation of "Fraction bases >= Q30"
 
     FASTQ_ALIGN_BWA (
         ch_cat_fastq, ch_bwa_index, true, ch_fasta
@@ -185,23 +212,40 @@ workflow GRZQC {
     ch_mosdepth_input = ch_mosdepth_input_1.combine(ch_bed_file, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
 
     //
-    // MODULE: MOSDEPTH
+    // MODULE: MOSDEPTH on all genes
     //
-    MOSDEPTH (
+    MOSDEPTH_all_genes (
         ch_mosdepth_input, ch_fasta
     )
-    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH.out.summary_txt.map{meta, file -> file}.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_all_genes.out.summary_txt.map{meta, file -> file}.collect())
 
-    ch_versions = ch_versions.mix(MOSDEPTH.out.versions.first())
+    ch_versions = ch_versions.mix(MOSDEPTH_all_genes.out.versions.first())
 
     // TODO : Fraction of selected regions meeting minimum sequencing depth (selected regions: 400 representative genes)
     // TODO : inputs -> selected regions bed file, minimum sequencing depth (coming from BfArM requirements)
 
+    // ch_mosdepth_rep_genes_input = ch_bam
+    //     .combine(ch_bai, ch_rep_genes, by: 0)
+    //     .map { meta, bam, bai, bed_file -> tuple(meta, bam, bai, bed_file) }
+
+    ch_mosdepth_rep_genes_input_1 = ch_bam.combine(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
+    ch_mosdepth_rep_genes_input = ch_mosdepth_input_1.combine(ch_rep_genes, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
+
+    MOSDEPTH_rep_genes  (
+        ch_mosdepth_rep_genes_input, ch_fasta
+    )
+
+    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_rep_genes.out.summary_txt.map{meta, file -> file}.collect())
+
     //
     // MODULE: Compare coverage : writing the results file
     //
+    ch_mosdepth_summary = MOSDEPTH_all_genes.out.summary_txt
+        .combine(MOSDEPTH_rep_genes.out.summary_txt, by: 0)
+        .map { meta, summary1, summary2 -> tuple(meta, summary1, summary2) }
+    ch_mosdepth_summary.view()
     COMPARE_COVERAGE(
-        MOSDEPTH.out.summary_txt
+        ch_mosdepth_summary
     )
 
     //
