@@ -5,6 +5,7 @@
 */
 include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq/main'
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+include { FASTP                 } from '../modules/nf-core/fastp/main'
 include { BWA_MEM                } from '../modules/nf-core/bwa/mem/main'
 include { BWA_INDEX              } from '../modules/nf-core/bwa/index/main'
 include { FASTQ_ALIGN_BWA        } from '../subworkflows/nf-core/fastq_align_bwa/main'
@@ -43,6 +44,7 @@ process COMPARE_COVERAGE {
     debug true
  
     input:
+    tuple val(meta), path(fastp_json)
     tuple val(meta), path(summary1),path(summary2)
  
     output:
@@ -53,6 +55,9 @@ process COMPARE_COVERAGE {
     """
     touch ${prefix}.result.txt
     echo ${meta.id}
+
+    q30_rate=\$(jq '.summary.before_filtering.q30_rate' ${fastp_json})
+
     if [[ "${meta.id}" =~ (TUMOR|tumor|Tumor) ]]; then
         if [[ "${meta.id}" =~ (WES|wes) ]]; then
             required_coverage=200  # Example coverage for TUMOR + WES
@@ -82,12 +87,12 @@ process COMPARE_COVERAGE {
     fi
 
     mosdepth_cov_2=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total_region" {print \$col}' ${summary2}) 
-    echo "Sample_id,Mosdepth_cov_all_genes, Mosdepth_cov_rep_genes,Required_cov,Qualtiy_check" >> ${prefix}.result.txt
+    echo "Sample_id,Mosdepth_cov_all_genes, q30_rate,Mosdepth_cov_rep_genes,Required_cov,Qualtiy_check" >> ${prefix}.result.txt
     echo "\$mosdepth_cov_2 >= \$required_coverage" | bc -l
     if (( \$(echo "\$mosdepth_cov_2 >= \$required_coverage" | bc -l) )); then
-        echo "${meta.id},\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,PASS" >> ${prefix}.result.txt
+        echo "${meta.id},\$q30_rate,\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,PASS" >> ${prefix}.result.txt
     else
-        echo "${meta.id},\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,FAIL" >> ${prefix}.result.txt
+        echo "${meta.id},\$q30_rate,\$mosdepth_cov_1,\$mosdepth_cov_2,\$required_coverage,FAIL" >> ${prefix}.result.txt
     fi
     """
 }
@@ -200,6 +205,24 @@ workflow GRZQC {
     )
 
     // TODO : Adapter triiming module implement here (fastp) We can maybe drop FastQC because fastp already implements the calculation of "Fraction bases >= Q30"
+    // MODULE: FASTP
+    //
+    save_trimmed_fail = false
+    save_merged = false
+    FASTP(
+        ch_cat_fastq,
+        [], // we are not using any adapter fastas at the moment
+        false, // we don't use discard_trimmed_pass at the moment
+        save_trimmed_fail,
+        save_merged
+    )
+    ch_fastp_json = FASTP.out.json
+        .map { meta, json -> tuple(meta, json) }
+
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect{ meta, json -> json })
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.html.collect{ meta, html -> html })
+    ch_versions = ch_versions.mix(FASTP.out.versions.first())
+
 
     FASTQ_ALIGN_BWA (
         ch_cat_fastq, ch_bwa_index, true, ch_fasta
@@ -238,13 +261,16 @@ workflow GRZQC {
     ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_rep_genes.out.summary_txt.map{meta, file -> file}.collect())
 
     //
-    // MODULE: Compare coverage : writing the results file
+    // MODULE: Compare coverage : writing the results file 
+    // FASTP Q30 ratio + mosdepth*2
     //
     ch_mosdepth_summary = MOSDEPTH_all_genes.out.summary_txt
         .combine(MOSDEPTH_rep_genes.out.summary_txt, by: 0)
         .map { meta, summary1, summary2 -> tuple(meta, summary1, summary2) }
     ch_mosdepth_summary.view()
+    
     COMPARE_COVERAGE(
+        ch_fastp_json,
         ch_mosdepth_summary
     )
 

@@ -22,7 +22,7 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
 
     for donor in donors:
         
-        case_id = donor.get('caseId', '')
+        case_id = donor.get('tanG', '')
         print(case_id)
         lab_data_list = donor.get('labData', [])
 
