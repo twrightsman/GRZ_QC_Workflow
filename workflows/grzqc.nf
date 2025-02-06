@@ -40,7 +40,7 @@ process ECHO_READS {
 }
 
 process COMPARE_COVERAGE {
- 
+    publishDir "${params.outdir}/results", mode: 'copy'
     debug true
  
     input:
@@ -105,6 +105,24 @@ process COMPARE_COVERAGE {
     else
         echo "${meta.id},\$q30_rate,\$mosdepth_cov,\$required_coverage,\$mosdepth_cov_rate_target,FAIL" >> ${prefix}.result.txt
     fi
+    """
+}
+
+//
+// Collect all result files produced by COMPARE_COVERAGE into an array
+//
+process MERGE_REPORTS {
+    publishDir "${params.outdir}/results", mode: 'copy'
+    input:
+      path csv_files 
+
+    output:
+      path "merged_result.csv"
+
+    script:
+    """
+    # Use awk to skip the header of every file except the first
+    awk 'FNR==1 && NR!=1 {next} 1' ${csv_files.join(' ')} > merged_result.csv
     """
 }
 
@@ -276,11 +294,15 @@ workflow GRZQC {
         .map { meta, summary, bed -> tuple(meta, summary, bed) }
     ch_mosdepth_summary.view()
     
-    COMPARE_COVERAGE(
+    csv_ch = COMPARE_COVERAGE(
         ch_fastp_json,
         ch_mosdepth_summary
     )
-
+    
+    // merge reports
+    csvs_ch = csv_ch.result_txt.collect()
+    MERGE_REPORTS(csvs_ch)
+    
     //
     // MODULE: Run FastQC
     //
