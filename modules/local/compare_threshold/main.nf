@@ -45,11 +45,11 @@ process COMPARE_THRESHOLD {
         mosdepth_cov=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total" {print \$col}' ${summary}) 
     fi
 
-    mosdepth_cov_rate_target=\$(awk -v req="\${TARGET_MIN_COVERAGE}" '
+    mosdepth_cov_rate_target=\$(gunzip -c ${bed} | awk -v req="\${TARGET_MIN_COVERAGE}" '
         BEGIN { count=0; total=0 }
         { total++; if (\$4 >= req) count++ }
         END { if (total > 0) print count/total; else print 0 }
-    ' ${bed})
+    ' )
       
     echo "Sample_id, libraryType, sequenceSubtype, genomicStudySubtype, q30_rate,Q30_THRESHOLD,Mosdepth_cov,MEAN_DEPTH_THRESHOLD,Mosdepth_cov_ratio_target_genes,TARGET_FRACTION_ABOVE_THRESHOLD,Qualtiy_check" >> ${prefix}.result.csv
        
