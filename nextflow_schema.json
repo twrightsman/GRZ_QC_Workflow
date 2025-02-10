@@ -106,15 +106,21 @@
                 },
                 "rep_genes_hg19": {
                     "type": "string",
-                    "description": "Path to the hg19 bed file of ~ 400 representative genes.",
+                    "description": "Path to the hg19 bed file of ~ 400 representative target genes.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the hg19 bed file of ~ 400 representative genes."
+                    "help_text": "Path to the hg19 bed file of ~ 400 representative target genes."
                 },
                 "rep_genes_hg38": {
                     "type": "string",
-                    "description": "Path to the hg38 bed file of ~ 400 representative genes.",
+                    "description": "Path to the hg38 bed file of ~ 400 representative target genes.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the hg38 bed file of ~ 400 representative genes."
+                    "help_text": "Path to the hg38 bed file of ~ 400 representative target genes."
+                },
+                "thresholds_json": {
+                    "type": "string",
+                    "description": "Path to the reads qualtity threshold json file.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to the reads qualtity threshold json file."
                 }
             }
         },

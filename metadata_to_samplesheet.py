@@ -18,6 +18,9 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
         [sample, fastq1, fastq2, bed_file, reference]
     """
     data = []
+    submission = json_data['submission']
+    genomicStudySubtype = submission.get('genomicStudySubtype', '')
+
     donors = json_data['donors']
 
     for donor in donors:
@@ -31,6 +34,7 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
             #print(lab_data)
             lab_data_name = lab_data.get('labDataName', '').replace(' ', '_')
             libraryType = lab_data.get('libraryType', [])
+            sequenceSubtype = lab_data.get('sequenceSubtype', []) 
             sequence_data = lab_data.get('sequenceData', [])
             
             #print(sequence_data)
@@ -38,7 +42,7 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
             #print("----------Sequence data---------------")
             #print(sequence_data)
             files = sequence_data.get('files', [])
-            sample = f"{case_id}_{lab_data_name}_{libraryType}"
+            sample = f"{case_id}_{lab_data_name}"
             bed_file = ""
             reference= sequence_data.get('referenceGenome', [])
             #print(reference)
@@ -61,7 +65,7 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
                 for r2_file in fastq_files["R2"]:
                     r2_base = re.sub(r'(R2|read2)', '', r2_file, flags=re.IGNORECASE)
                     if r1_base == r2_base:
-                        data.append([sample, r1_file, r2_file, bed_file, reference])
+                        data.append([sample, libraryType,sequenceSubtype,genomicStudySubtype, r1_file, r2_file, bed_file, reference])
                         break
     return data
 
@@ -98,7 +102,7 @@ def main():
     try:
         with open(output_file, 'w', newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(['sample', 'fastq_1', 'fastq_2', 'bed_file', 'reference'])
+            writer.writerow(['sample', 'libraryType','sequenceSubtype','genomicStudySubtype','fastq_1', 'fastq_2', 'bed_file', 'reference'])
             writer.writerows(extracted_data)
         print(f"Data has been extracted and saved to '{output_file}'")
     except PermissionError:

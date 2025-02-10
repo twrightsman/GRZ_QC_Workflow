@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=32
+#SBATCH --ntasks-per-node=50
 
 submission_base_path=/data/ceph/ssd/scratch/tmp/wayu0/grz_qc_workflow/WES_YW_test/
 output_path=/data/ceph/ssd/scratch/tmp/wayu0/grz_qc_workflow/
