@@ -2,6 +2,5 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - gawk=5.3.0
   - pandas
   - openpyxl

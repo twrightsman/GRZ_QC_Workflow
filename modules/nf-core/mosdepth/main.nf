@@ -4,8 +4,8 @@ process MOSDEPTH {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mosdepth:0.3.8--hd299d5a_0' :
-        'biocontainers/mosdepth:0.3.8--hd299d5a_0'}"
+        'https://depot.galaxyproject.org/singularity/mosdepth:0.3.3--h37c5b7d_2' :
+        'biocontainers/mosdepth:0.3.3--h37c5b7d_2'}"
 
     input:
     tuple val(meta),  path(bam), path(bai), path(bed)

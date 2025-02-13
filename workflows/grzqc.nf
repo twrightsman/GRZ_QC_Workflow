@@ -62,9 +62,9 @@ workflow GRZQC {
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
     }.branch {
             meta, reference ->
-                ref_37  : reference == "GRCh37"
+                ref_37  : (reference == "GRCh37" || reference == "hg19")
                     return [ meta, params.bwa_index_37 ]
-                ref_38  : reference == "GRCh38"
+                ref_38  : (reference == "GRCh38" || reference == "hg38")
                     return [ meta, params.bwa_index_38 ]
         }.set{
         ch_reference_ind
@@ -81,9 +81,9 @@ workflow GRZQC {
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
     }.branch {
             meta, reference ->
-                rep_genes_hg19  : reference == "GRCh37"
+                rep_genes_hg19  : (reference == "GRCh37" || reference == "hg19")
                     return [ meta, params.rep_genes_hg19 ]
-                rep_genes_hg38  : reference == "GRCh38"
+                rep_genes_hg38  : (reference == "GRCh38" || reference == "hg38")
                     return [ meta, params.rep_genes_hg38 ]
         }.set{
         ch_rep_genes_by_ref
@@ -100,9 +100,9 @@ workflow GRZQC {
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
     }.branch {
             meta, reference ->
-                ref_37  : reference == "GRCh37"
+                ref_37  : (reference == "GRCh37" || reference == "hg19")
                     return [ meta, params.fasta_37 ]
-                ref_38  : reference == "GRCh38"
+                ref_38  : (reference == "GRCh38" || reference == "hg38")
                     return [ meta, params.fasta_38 ]
         }.set{
         ch_fasta_ind
@@ -155,7 +155,6 @@ workflow GRZQC {
     // Is there a better way to do this, i.e join more than 2 channels into one in one step?
     ch_mosdepth_input_1 = ch_bam.join(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
     ch_mosdepth_input = ch_mosdepth_input_1.join(ch_bed_file, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
-    ch_mosdepth_input.view()
     //
     // MODULE: MOSDEPTH, get average coverage
     //
@@ -171,7 +170,7 @@ workflow GRZQC {
     //
     ch_mosdepth_target_genes_input_1 = ch_bam.join(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
     ch_mosdepth_target_genes_input = ch_mosdepth_input_1.join(ch_rep_genes, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
-
+    ch_mosdepth_target_genes_input.view()
     MOSDEPTH_TARGET  (
         ch_mosdepth_target_genes_input, ch_fasta
     )
