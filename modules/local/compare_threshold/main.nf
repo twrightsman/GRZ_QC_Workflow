@@ -52,38 +52,48 @@ process COMPARE_THRESHOLD {
 
     if str(QUALITY_THRESHOLD) == "30":
         Q30_THRESHOLD = float(THRESHOLDS["fractionBasesAboveQualityThreshold"]["fractionBasesAbove"])
-    else:
-        Q30_THRESHOLD = 0.0
 
     TARGET_MIN_COVERAGE = float(THRESHOLDS["targetedRegionsAboveMinCoverage"]["minCoverage"])
     TARGET_FRACTION_ABOVE_THRESHOLD = float(THRESHOLDS["targetedRegionsAboveMinCoverage"]["fractionAbove"])
 
-    ### Extract results and thresholds
+    ### compare results with thresholds
 
     mosdepth_summary = "${summary}"
     bed_file = "${bed}"
 
     # 1. Read mosdepth summary file
-    df = pd.read_csv(mosdepth_summary, delim_whitespace=True)
+    df = pd.read_csv(mosdepth_summary, sep="\\t")
     row_name = "total_region" if libraryType in ["panel", "wes"] else "total"
     mosdepth_cov = float(df.loc[df.iloc[:,0] == row_name, "mean"].values[0])
 
-    # 2. Process the mosdepth per base target gene result .
-    total_length = 0
-    filtered_length = 0
+    # 2. parse the mosdepth per base target gene result 
+    count = 0
+    total = 0
     with gzip.open(bed_file, "rt") as f:
         for line in f:
+            total += 1
             parts = line.strip().split()
-            # Calculate interval length: col3 - col2
-            start = float(parts[1])
-            end   = float(parts[2])
-            interval_length = end - start
-            total_length += interval_length
-            # If column 4 > TARGET_MIN_COVERAGE, add to filtered length.
-            if float(parts[3]) > TARGET_MIN_COVERAGE:
-                filtered_length += interval_length
+            if float(parts[3]) >= TARGET_MIN_COVERAGE:
+                count += 1
 
-    mosdepth_cov_rate_target = filtered_length / total_length if total_length > 0 else 0
+    mosdepth_cov_rate_target = count / total if total > 0 else 0
+    ##    # per base solution
+    ##    # ! note if we change this , we also need to change the output channel of MOSDEPTH_TARGET
+    ##    total_length = 0
+    ##    filtered_length = 0
+    ##    with gzip.open(bed_file, "rt") as f:
+    ##        for line in f:
+    ##            parts = line.strip().split()
+    ##            # Calculate interval length: col3 - col2
+    ##            start = float(parts[1])
+    ##            end   = float(parts[2])
+    ##            interval_length = end - start
+    ##            total_length += interval_length
+    ##            # If column 4 > TARGET_MIN_COVERAGE, add to filtered length.
+    ##            if float(parts[3]) > TARGET_MIN_COVERAGE:
+    ##                filtered_length += interval_length
+    ##
+    ##    mosdepth_cov_rate_target = filtered_length / total_length if total_length > 0 else 0
 
     # 3. Perform the quality check.
     quality_check = "PASS" if (mosdepth_cov >= MEAN_DEPTH_THRESHOLD and q30_rate >= Q30_THRESHOLD and mosdepth_cov_rate_target >= TARGET_FRACTION_ABOVE_THRESHOLD) else "FAIL"

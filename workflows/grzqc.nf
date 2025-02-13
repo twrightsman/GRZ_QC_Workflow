@@ -170,7 +170,6 @@ workflow GRZQC {
     //
     ch_mosdepth_target_genes_input_1 = ch_bam.join(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
     ch_mosdepth_target_genes_input = ch_mosdepth_input_1.join(ch_rep_genes, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
-    ch_mosdepth_target_genes_input.view()
     MOSDEPTH_TARGET  (
         ch_mosdepth_target_genes_input, ch_fasta
     )
@@ -184,7 +183,6 @@ workflow GRZQC {
     ch_mosdepth_summary = MOSDEPTH.out.summary_txt
         .join(MOSDEPTH_TARGET.out.regions_bed, by: 0)
         .map { meta, summary, bed -> tuple(meta, summary, bed) }
-    ch_mosdepth_summary.view()
     
     ch_fastp_mosdepth_merged = ch_fastp_json
         .join(ch_mosdepth_summary, by: 0)
