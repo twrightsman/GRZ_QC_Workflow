@@ -66,7 +66,7 @@ process COMPARE_THRESHOLD {
     row_name = "total_region" if libraryType in ["panel", "wes"] else "total"
     mosdepth_cov = float(df.loc[df.iloc[:,0] == row_name, "mean"].values[0])
 
-    # 2. parse the mosdepth per base target gene result 
+    # 2. parse the mosdepth target gene result 
     count = 0
     total = 0
     with gzip.open(bed_file, "rt") as f:
