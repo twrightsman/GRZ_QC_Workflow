@@ -4,7 +4,7 @@ nf_core_version: 3.0.2
 org_path: null
 repository_type: pipeline
 template:
-  author: Shounak Chakraborty
+  author: Shounak Chakraborty, Yun Wang
   description: 'QC pipleing for 2% of data that will be submitted to the GRZ: Map
     and calulate coverage'
   force: true

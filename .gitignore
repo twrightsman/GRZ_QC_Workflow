@@ -9,3 +9,4 @@ testing*
 *.pyc
 null/
 run_grzqc_docker.sh
+slurm*

@@ -13,6 +13,24 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
+            "libraryType": {
+                "type": "string",
+                "pattern": "panel|wgs|wes|panel_lr|wgs_lr|wes_lr",
+                "errorMessage": "Library type must be one of the followings: panel, wgs, wes, panel_lr, wgs_lr, wes_lr",
+                "meta": ["libraryType"]
+            },
+            "sequenceSubtype": {
+                "type": "string",
+                "pattern": "somatic|germline",
+                "errorMessage": "Library type must be either somatic or germline",
+                "meta": ["sequenceSubtype"]
+            },
+            "genomicStudySubtype": {
+                "type": "string",
+                "pattern": "tumor\\+germline|tumor-only|germline-only",
+                "errorMessage": "Library type must be either tumor+germline, tumor-only or germline-only",
+                "meta": ["genomicStudySubtype"]
+            },
             "fastq_1": {
                 "type": "string",
                 "format": "file-path",
@@ -31,15 +49,15 @@
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.bed$",
+                "pattern": "^\\S+\\.bed(\\.gz)?$",
                 "errorMessage": "Target bed file"
             },
             "reference": {
                 "type": "string",
-		        "pattern": "GRCh(37|38)",
-                "errorMessage": "The reference genome has to be either GRCh37 or GRCh38"
+		        "pattern": "GRCh38|GRCh37|hg19|hg38",
+                "errorMessage": "The reference genome has to be either hg19/38 or GRCh37/38"
             }
         },
-        "required": ["sample", "fastq_1", "reference"]
+        "required": ["sample", "libraryType", "sequenceSubtype","genomicStudySubtype", "fastq_1", "reference"]
     }
 }

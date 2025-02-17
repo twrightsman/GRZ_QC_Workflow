@@ -5,85 +5,27 @@
 */
 include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq/main'
 include { FASTQC                 } from '../modules/nf-core/fastqc/main'
+include { FASTP                 } from '../modules/nf-core/fastp/main'
 include { BWA_MEM                } from '../modules/nf-core/bwa/mem/main'
 include { BWA_INDEX              } from '../modules/nf-core/bwa/index/main'
 include { FASTQ_ALIGN_BWA        } from '../subworkflows/nf-core/fastq_align_bwa/main'
 include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort/main'
 include { SAMTOOLS_INDEX         } from '../modules/nf-core/samtools/index/main'
 include { MOSDEPTH               } from '../modules/nf-core/mosdepth/main'
+include { MOSDEPTH as MOSDEPTH_TARGET   } from '../modules/nf-core/mosdepth/main'
 include { MULTIQC                } from '../modules/nf-core/multiqc/main'
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_grzqc_pipeline'
 
+include { COMPARE_THRESHOLD      } from '../modules/local/compare_threshold'
+include { MERGE_REPORTS          } from '../modules/local/merge_reports'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
-
-process ECHO_READS {
- 
-    debug true
- 
-    input:
-    tuple val(meta), path(reads)
- 
-    script:
-    """
-    echo ${reads}
-    """
-}
-
-process COMPARE_COVERAGE {
- 
-    debug true
- 
-    input:
-    tuple val(meta), path(summary)
- 
-    output:
-    path('*.result.txt')      , emit: result_txt
-
-    script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    """
-    touch ${prefix}.result.txt
-    echo ${meta.id}
-    if [[ "${meta.id}" =~ (TUMOR|tumor|Tumor) ]]; then
-        if [[ "${meta.id}" =~ (WES|wes) ]]; then
-            required_coverage=200  # Example coverage for TUMOR + WES
-        elif [[ "${meta.id}" =~ (WGS|wgs) ]]; then
-            required_coverage=100  # Example coverage for TUMOR + WGS
-        else
-            required_coverage=100  # Default for TUMOR
-        fi
-    elif [[ "${meta.id}" =~ (NORMAL|normal|Normal) ]]; then
-        if [[ "${meta.id}" =~ (WES|wes) ]]; then
-            required_coverage=60  # Example coverage for NORMAL + WES
-        elif [[ "${meta.id}" =~ (WGS|wgs) ]]; then
-            required_coverage=30  # Example coverage for NORMAL + WGS
-        else
-            required_coverage=30  # Default for NORMAL
-        fi
-    else
-        echo "The sample ID does not contain the strings TUMOR or NORMAL." >> ${prefix}.result.txt
-    exit 1
-    fi
-
-    # Extract the mean coverage from the "total" row of the mosdepth file
-    mosdepth_cov=\$(awk 'NR==1 {for (i=1; i<=NF; i++) if (\$i == "mean") col=i} \$1 == "total" {print \$col}' ${summary}) 
-    echo "Sample_id,Mosdepth_cov,Required_cov,Qualtiy_check" >> ${prefix}.result.txt
-    echo "\$mosdepth_cov >= \$required_coverage" | bc -l
-    if (( \$(echo "\$mosdepth_cov >= \$required_coverage" | bc -l) )); then
-        echo "${meta.id},\$mosdepth_cov,\$required_coverage,PASS" >> ${prefix}.result.txt
-    else
-        echo "${meta.id},\$mosdepth_cov,\$required_coverage,FAIL" >> ${prefix}.result.txt
-    fi
-    """
-}
 
 workflow GRZQC {
 
@@ -120,9 +62,9 @@ workflow GRZQC {
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
     }.branch {
             meta, reference ->
-                ref_37  : reference == "GRCh37"
+                ref_37  : (reference == "GRCh37" || reference == "hg19")
                     return [ meta, params.bwa_index_37 ]
-                ref_38  : reference == "GRCh38"
+                ref_38  : (reference == "GRCh38" || reference == "hg38")
                     return [ meta, params.bwa_index_38 ]
         }.set{
         ch_reference_ind
@@ -134,14 +76,33 @@ workflow GRZQC {
         ch_bwa_index
     }
 
+    // Create bed channels for Mosdepth on ~ 400 representative genes
+    ch_samplesheet.map{
+        meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
+    }.branch {
+            meta, reference ->
+                rep_genes_hg19  : (reference == "GRCh37" || reference == "hg19")
+                    return [ meta, params.rep_genes_hg19 ]
+                rep_genes_hg38  : (reference == "GRCh38" || reference == "hg38")
+                    return [ meta, params.rep_genes_hg38 ]
+        }.set{
+        ch_rep_genes_by_ref
+        }
+
+    ch_rep_genes_by_ref.rep_genes_hg19.mix(
+        ch_rep_genes_by_ref.rep_genes_hg38
+    ).set{
+        ch_rep_genes
+    }
+
     // Create fasta channels for BWA_MEM
     ch_samplesheet.map{
         meta, fastqs, bed_file, reference -> tuple(meta, reference.first())
     }.branch {
             meta, reference ->
-                ref_37  : reference == "GRCh37"
+                ref_37  : (reference == "GRCh37" || reference == "hg19")
                     return [ meta, params.fasta_37 ]
-                ref_38  : reference == "GRCh38"
+                ref_38  : (reference == "GRCh38" || reference == "hg38")
                     return [ meta, params.fasta_38 ]
         }.set{
         ch_fasta_ind
@@ -154,6 +115,7 @@ workflow GRZQC {
         ch_fasta
     }
 
+
     //
     // MODULE: Concatenate FastQ files from same sample if required
     //
@@ -164,15 +126,25 @@ workflow GRZQC {
     .mix(ch_fastqs.single_sample_paired_end)
     .set { ch_cat_fastq }
 
-
+    // 
+    // MODULE: FASTP
     //
-    // MODULE: Echo reads
-    //
-    ECHO_READS (
-        ch_cat_fastq
+    save_trimmed_fail = false
+    save_merged = false
+    FASTP(
+        ch_cat_fastq,
+        [], // we are not using any adapter fastas at the moment
+        false, // we don't use discard_trimmed_pass at the moment
+        save_trimmed_fail,
+        save_merged
     )
+    ch_fastp_json = FASTP.out.json
+        .map { meta, json -> tuple(meta, json) }
 
-    // TODO : Adapter triiming module implement here (fastp)
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect{ meta, json -> json })
+    ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.html.collect{ meta, html -> html })
+    ch_versions = ch_versions.mix(FASTP.out.versions.first())
+
 
     FASTQ_ALIGN_BWA (
         ch_cat_fastq, ch_bwa_index, true, ch_fasta
@@ -180,12 +152,11 @@ workflow GRZQC {
     ch_bam = FASTQ_ALIGN_BWA.out.bam
     ch_bai = FASTQ_ALIGN_BWA.out.bai
 
-    //Is there a better way to do this, i.e combine more than 2 channels into one in one step?
-    ch_mosdepth_input_1 = ch_bam.combine(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
-    ch_mosdepth_input = ch_mosdepth_input_1.combine(ch_bed_file, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
-
+    // Is there a better way to do this, i.e join more than 2 channels into one in one step?
+    ch_mosdepth_input_1 = ch_bam.join(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
+    ch_mosdepth_input = ch_mosdepth_input_1.join(ch_bed_file, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
     //
-    // MODULE: MOSDEPTH
+    // MODULE: MOSDEPTH, get average coverage
     //
     MOSDEPTH (
         ch_mosdepth_input, ch_fasta
@@ -194,16 +165,41 @@ workflow GRZQC {
 
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions.first())
 
-    // TODO : Fraction of selected regions meeting minimum sequencing depth (selected regions: 400 representative genes)
-    // TODO : inputs -> selected regions bed file, minimum sequencing depth (coming from BfArM requirements)
-
     //
-    // MODULE: Compare coverage : writing the results file
+    // MODULE: MOSDEPTH, get coverage on target genes
     //
-    COMPARE_COVERAGE(
-        MOSDEPTH.out.summary_txt
+    ch_mosdepth_target_genes_input_1 = ch_bam.join(ch_bai, by: 0).map { meta, file1, file2 -> tuple(meta, file1, file2) }
+    ch_mosdepth_target_genes_input = ch_mosdepth_input_1.join(ch_rep_genes, by: 0).map { meta, file1, file2, bed_file -> tuple(meta, file1, file2, bed_file) }
+    MOSDEPTH_TARGET  (
+        ch_mosdepth_target_genes_input, ch_fasta
     )
 
+    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_TARGET.out.summary_txt.map{meta, file -> file}.collect())
+
+    //
+    // MODULE: Compare coverage with thresholds: writing the results file 
+    // input: FASTP Q30 ratio + mosdepth all genes + mosdepth target genes
+    //
+    ch_mosdepth_summary = MOSDEPTH.out.summary_txt
+        .join(MOSDEPTH_TARGET.out.regions_bed, by: 0)
+        .map { meta, summary, bed -> tuple(meta, summary, bed) }
+    
+    ch_fastp_mosdepth_merged = ch_fastp_json
+        .join(ch_mosdepth_summary, by: 0)
+        .map { meta, json, summary, bed -> 
+            tuple(meta, json, summary, bed)
+    }
+
+    csv_ch = COMPARE_THRESHOLD(
+        ch_fastp_mosdepth_merged
+    )
+    
+    //
+    // MODULE: Merge Reports
+    //
+    csvs_ch = csv_ch.result_csv.collect()
+    MERGE_REPORTS(csvs_ch)
+    
     //
     // MODULE: Run FastQC
     //
@@ -267,7 +263,7 @@ workflow GRZQC {
 
     emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
     versions       = ch_versions                 // channel: [ path(versions.yml) ]
-
+    
 }
 
 /*
