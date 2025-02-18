@@ -10,3 +10,4 @@ testing*
 null/
 run_grzqc_docker.sh
 slurm*
+grzqc_output/
