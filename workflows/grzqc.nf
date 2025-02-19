@@ -3,26 +3,21 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq'
-include { FASTQC                 } from '../modules/nf-core/fastqc'
-include { FASTP                  } from '../modules/nf-core/fastp'
-include { BWA_MEM                } from '../modules/nf-core/bwa/mem'
-include { BWA_INDEX              } from '../modules/nf-core/bwa/index'
-include { SAMTOOLS_SORT          } from '../modules/nf-core/samtools/sort'
-include { SAMTOOLS_INDEX         } from '../modules/nf-core/samtools/index'
-include { MOSDEPTH               } from '../modules/nf-core/mosdepth'
-include { MOSDEPTH as MOSDEPTH_TARGET   } from '../modules/nf-core/mosdepth'
-include { MULTIQC                } from '../modules/nf-core/multiqc'
+
 include { paramsSummaryMap       } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc   } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_grzqc_pipeline'
+include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq'
+include { FASTQC                 } from '../modules/nf-core/fastqc'
+include { FASTP                  } from '../modules/nf-core/fastp'
+include { MULTIQC                } from '../modules/nf-core/multiqc'
 include { COMPARE_THRESHOLD      } from '../modules/local/compare_threshold'
 include { MERGE_REPORTS          } from '../modules/local/merge_reports'
 include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG38 } from '../subworkflows/nf-core/fastq_align_bwa'
 include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG37 } from '../subworkflows/nf-core/fastq_align_bwa'
-include { BWA_INDEX  as  BWA_INDEX_HG38           } from '../modules/nf-core/bwa/index/main'
-include { BWA_INDEX  as  BWA_INDEX_HG37           } from '../modules/nf-core/bwa/index/main'
+include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG38   } from '../modules/nf-core/bwamem2/index/main'
+include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG37   } from '../modules/nf-core/bwamem2/index/main'
 include { MOSDEPTH_MOSDEPTH_TARGET as MOSDEPTH_MOSDEPTH_TARGET_HG38 } from '../subworkflows/local/mosdepth_mosdepth_target'
 include { MOSDEPTH_MOSDEPTH_TARGET as MOSDEPTH_MOSDEPTH_TARGET_HG37 } from '../subworkflows/local/mosdepth_mosdepth_target'
 /*
@@ -56,16 +51,18 @@ workflow GRZQC {
     bwa_index_38    = params.bwa_index_38   ? Channel.fromPath(params.bwa_index_38, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
                                             : Channel.empty()
 
-    thresholds  = Channel.fromPath("assets/thresholds.json", checkIfExists: true).collect()
+    thresholds  = Channel.fromPath("${projectDir}/assets/thresholds.json", checkIfExists: true).collect()
 
     ch_samplesheet.view()
     // Creating merge fastq channel from samplesheet
-    ch_samplesheet.branch {
-            meta, fastqs, bed_file ->
-                single_sample_paired_end  : fastqs.size() < 2
-                    return [ meta, fastqs.flatten(), bed_file ]
+    ch_samplesheet.map{
+        meta, fastqs, bed_file -> tuple(meta, fastqs)
+    }.branch {
+            meta, fastqs ->
+                single_sample_paired_end  : fastqs.size() < 2 | fastqs.size() == 2
+                    return [ meta, fastqs.flatten() ]
                 multiple_sample_paired_end: fastqs.size() > 2
-                    return [ meta, fastqs.flatten(), bed_file.first() ]
+                    return [ meta, fastqs.flatten() ]
         }.set{
             ch_fastqs
         }
@@ -120,9 +117,9 @@ workflow GRZQC {
     ch_bams = Channel.empty()
     // bwa index creation might be dropped
     if (!params.bwa_index_38){
-        BWA_INDEX_HG38(fasta_38)
-        ch_versions = ch_versions.mix(BWA_INDEX_HG38.out.versions.first())
-        bwa_index_38 = BWA_INDEX_HG38.out.index
+        BWAMEM2_INDEX_HG38(fasta_38)
+        ch_versions = ch_versions.mix(BWAMEM2_INDEX_HG38.out.versions.first())
+        bwa_index_38 = BWAMEM2_INDEX_HG38.out.index
     }
 
     // hg38 alignment analysis
@@ -139,9 +136,9 @@ workflow GRZQC {
 
     // bwa index creation might be dropped
     if (!params.bwa_index_37){
-        BWA_INDEX_HG37(fasta_37)
-        ch_versions = ch_versions.mix(BWA_INDEX_HG38.out.versions.first())
-        bwa_index_37 = BWA_INDEX_HG37.out.index
+        BWAMEM2_INDEX_HG37(fasta_37)
+        ch_versions = ch_versions.mix(BWAMEM2_INDEX_HG38.out.versions.first())
+        bwa_index_37 = BWAMEM2_INDEX_HG37.out.index
     }
     // hg37 alignment analysis
     FASTQ_ALIGN_BWA_HG37 (

@@ -3,20 +3,21 @@ import pandas as pd
 import gzip
 import json
 import argparse
+import sys
 
 def parse_args(args=None):
 
     Description = "Compare the results with the thresholds."
 
-    parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
+    parser = argparse.ArgumentParser(description=Description)
     parser.add_argument("--summary", "-s", required=True, help="mosdepth summary file")
     parser.add_argument("--bed", "-b", required=True, help="mosdepth target bed file")
-    parser.add_argument("--thresholds_json", "-t", required=True, help="thresholds json file")
+    parser.add_argument("--thresholds", "-t", required=True, help="thresholds json file")
     parser.add_argument("--fastp_json", "-f", required=True, help="fastp json file")
     parser.add_argument("--sample_id", "-i", required=True, help="sample id/meta.id")
     parser.add_argument("--libraryType", "-l", required=True, help="libraryType")
     parser.add_argument("--sequenceSubtype", "-a", required=True, help="sequenceSubtype")
-    parser.add_argument("--genomicStudySubtype", "-a", required=True, help="genomicStudySubtype")
+    parser.add_argument("--genomicStudySubtype", "-g", required=True, help="genomicStudySubtype")
 
     return parser.parse_args(args)
 
@@ -30,7 +31,7 @@ def main(args=None):
     q30_rate = fastp_data["summary"]["before_filtering"]["q30_rate"]
 
     # Extract thresholds JSON.
-    with open(args.params.thresholds_json, "r") as f:
+    with open(args.thresholds, "r") as f:
         thresholds_data = json.load(f)
 
     THRESHOLDS = None
@@ -47,6 +48,8 @@ def main(args=None):
     MEAN_DEPTH_THRESHOLD = float(THRESHOLDS["meanDepthOfCoverage"])
     QUALITY_THRESHOLD = THRESHOLDS["fractionBasesAboveQualityThreshold"]["qualityThreshold"]
 
+    ## what is default Q30_THRESHOLD value?
+    Q30_THRESHOLD = 0.0
     if str(QUALITY_THRESHOLD) == "30":
         Q30_THRESHOLD = float(THRESHOLDS["fractionBasesAboveQualityThreshold"]["fractionBasesAbove"])
 
@@ -94,8 +97,8 @@ def main(args=None):
 
     # 4. Write the results to a CSV file.
     with open(f"{args.sample_id}.result.csv", "w") as f:
-        f.write("Sample_id, libraryType, sequenceSubtype, genomicStudySubtype, q30_rate, Q30_THRESHOLD, Mosdepth_cov, MEAN_DEPTH_THRESHOLD, Mosdepth_cov_ratio_target_genes, TARGET_FRACTION_ABOVE_THRESHOLD, Quality_check\\n")
-        f.write(f"{args.sample_id},{args.libraryType},{args.sequenceSubtype},{args.genomicStudySubtype},{q30_rate},{Q30_THRESHOLD},{mosdepth_cov},{MEAN_DEPTH_THRESHOLD},{mosdepth_cov_rate_target},{TARGET_FRACTION_ABOVE_THRESHOLD},{quality_check}\\n")
+        f.write("Sample_id, libraryType, sequenceSubtype, genomicStudySubtype, q30_rate, Q30_THRESHOLD, Mosdepth_cov, MEAN_DEPTH_THRESHOLD, Mosdepth_cov_ratio_target_genes, TARGET_FRACTION_ABOVE_THRESHOLD, Quality_check\n")
+        f.write(f"{args.sample_id},{args.libraryType},{args.sequenceSubtype},{args.genomicStudySubtype},{q30_rate},{Q30_THRESHOLD},{mosdepth_cov},{MEAN_DEPTH_THRESHOLD},{mosdepth_cov_rate_target},{TARGET_FRACTION_ABOVE_THRESHOLD},{quality_check}\n")
 
 if __name__ == "__main__":
 	sys.exit(main())

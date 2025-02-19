@@ -20,7 +20,7 @@ process COMPARE_THRESHOLD {
         --fastp_json ${fastp_json} \\
         --summary ${summary} \\
         --bed ${bed} \\
-        --thresholds_json ${thresholds} \\
+        --thresholds ${thresholds} \\
         --sample_id ${meta.id} \\
         --libraryType ${meta.libraryType} \\
         --sequenceSubtype ${meta.sequenceSubtype} \\
