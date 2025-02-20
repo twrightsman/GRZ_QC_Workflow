@@ -97,7 +97,7 @@ def main(args=None):
 
     # 4. Write the results to a CSV file.
     with open(f"{args.sample_id}.result.csv", "w") as f:
-        f.write("Sample_id, libraryType, sequenceSubtype, genomicStudySubtype, q30_rate, Q30_THRESHOLD, Mosdepth_cov, MEAN_DEPTH_THRESHOLD, Mosdepth_cov_ratio_target_genes, TARGET_FRACTION_ABOVE_THRESHOLD, Quality_check\n")
+        f.write("Sample_id,libraryType,sequenceSubtype,genomicStudySubtype,q30_rate,Q30_THRESHOLD,Mosdepth_cov,MEAN_DEPTH_THRESHOLD,Mosdepth_cov_ratio_target_genes,TARGET_FRACTION_ABOVE_THRESHOLD,Quality_check\n")
         f.write(f"{args.sample_id},{args.libraryType},{args.sequenceSubtype},{args.genomicStudySubtype},{q30_rate},{Q30_THRESHOLD},{mosdepth_cov},{MEAN_DEPTH_THRESHOLD},{mosdepth_cov_rate_target},{TARGET_FRACTION_ABOVE_THRESHOLD},{quality_check}\n")
 
 if __name__ == "__main__":

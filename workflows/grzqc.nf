@@ -53,7 +53,6 @@ workflow GRZQC {
 
     thresholds  = Channel.fromPath("${projectDir}/assets/thresholds.json", checkIfExists: true).collect()
 
-    ch_samplesheet.view()
     // Creating merge fastq channel from samplesheet
     ch_samplesheet.map{
         meta, fastqs, bed_file -> tuple(meta, fastqs)
