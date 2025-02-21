@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    nf-core/grzqc
+    BfArM-MVH/GRZ_QC_Workflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    Github : https://github.com/nf-core/grzqc
-    Website: https://nf-co.re/grzqc
-    Slack  : https://nfcore.slack.com/channels/grzqc
+    Github : https://github.com/BfArM-MVH/GRZ_QC_Workflow
 ----------------------------------------------------------------------------------------
 */
 

@@ -1,4 +1,4 @@
-# nf-core/grzqc: Citations
+# BfArM-MVH/GRZ_QC_Workflow: Citations
 
 ## [nf-core](https://pubmed.ncbi.nlm.nih.gov/32055031/)
 

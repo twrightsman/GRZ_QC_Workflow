@@ -1,7 +1,7 @@
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://raw.githubusercontent.com/nf-core/grzqc/master/nextflow_schema.json",
-    "title": "nf-core/grzqc pipeline parameters",
+    "title": "BfArM-MVH/GRZ_QC_Workflow pipeline parameters",
     "description": "Quality Control pipeline for the data that will be submitted to the GRZ: Map and calculate coverage",
     "type": "object",
     "$defs": {
@@ -115,6 +115,13 @@
                     "description": "Path to the hg38 bed file of ~ 400 representative target genes.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Path to the hg38 bed file of ~ 400 representative target genes."
+                }
+                ,
+                "threshold": {
+                    "type": "string",
+                    "description": "Path to thresholds.json file.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "Path to thresholds.json file."
                 }
             }
         },
