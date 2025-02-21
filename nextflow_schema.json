@@ -72,7 +72,6 @@
                 },
                 "bwa_index_37": {
                     "type": "string",
-                    "format": "file-path",
                     "description": "Path to the GRCh37 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Path to the GRCh37 BWAMEM2 index. This parameter will be automatically created if not specified."
@@ -89,7 +88,6 @@
                 },
                 "bwa_index_38": {
                     "type": "string",
-                    "format": "file-path",
                     "description": "Path to the GRCh38 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
                     "help_text": "Path to the GRCh38 BWAMEM2 index. This parameter will be automatically created if not specified."

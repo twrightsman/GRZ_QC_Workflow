@@ -41,10 +41,10 @@ workflow GRZQC {
     fasta_38        = Channel.fromPath(params.fasta_38, checkIfExists: true)
                     .map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
 
-    bwa_index_37    = params.bwa_index_37   ? Channel.fromPath(params.bwa_index_37, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    bwa_index_37    = params.bwa_index_37   ? Channel.fromPath(params.bwa_index_37 , checkIfExists: true, type: 'dir').map{ file -> tuple([id: "hg19"], file) }.collect()
                                             : Channel.empty()
 
-    bwa_index_38    = params.bwa_index_38   ? Channel.fromPath(params.bwa_index_38, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    bwa_index_38    = params.bwa_index_38   ? Channel.fromPath(params.bwa_index_38 , checkIfExists: true, type: 'dir').map{ file -> tuple([id: "hg38"], file) }.collect()
                                             : Channel.empty()
 
     if (!params.thresholds){
@@ -125,6 +125,7 @@ workflow GRZQC {
 
     ch_bams = Channel.empty()
     // bwa index creation might be dropped
+
     if (!params.bwa_index_38){
         BWAMEM2_INDEX_HG38(fasta_38)
         ch_versions = ch_versions.mix(BWAMEM2_INDEX_HG38.out.versions.first())
