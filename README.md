@@ -39,11 +39,12 @@
 > [!NOTE]
 > If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
 
-This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet and then uses this samplesheet to run the nextflow pipeline. 
+This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet and then uses this samplesheet to run the nextflow pipeline.
 
 Now, you can run the pipeline using:
 
-```bash run_grzqc.sh <Submission_base_directory_path> <OUTDIR>
+```bash
+bash run_grzqc.sh <Submission_base_directory_path> <OUTDIR>
 ```
 
 > [!WARNING]
@@ -87,4 +88,4 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-> 
+>
