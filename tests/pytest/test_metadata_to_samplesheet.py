@@ -8,6 +8,7 @@ from grz_qc.metadata_to_samplesheet import main
 def test_metadata_to_samplesheet():
     # Define the arguments
     args = [
+        "--submission_metadata_json",
         "tests/data/WES_tumor+germline.metadata.json",
         "/data/",
     ]

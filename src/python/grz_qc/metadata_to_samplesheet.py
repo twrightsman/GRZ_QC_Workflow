@@ -128,14 +128,15 @@ def parse_args(args=None):
         description="Extract data from GRZ schema JSON and create a CSV file."
     )
     parser.add_argument(
-        "submission_metadata_json",
-        help="Path to the submission metadata JSON file",
-    )
-    parser.add_argument(
         "submission_base_path",
         help="Path to the submission base directory",
     )
     parser.add_argument("output_file", help="Output path of the samplesheet CSV file")
+    parser.add_argument(
+        "--submission_metadata_json",
+        help="Path to the submission metadata JSON file",
+        default=None,
+    )
     return parser.parse_args(args)
 
 
@@ -143,8 +144,13 @@ def main(args=None):
     args = parse_args(args)
 
     submission_base_path = Path(args.submission_base_path)
-    metadata_file = Path(args.submission_metadata_json)
     output_file = Path(args.output_file)
+    # Set default metadata file path if not provided
+    metadata_file = (
+        Path(args.submission_metadata_json)
+        if args.submission_metadata_json
+        else submission_base_path / "metadata" / "metadata.json"
+    )
 
     # read the metadata.json file
     try:

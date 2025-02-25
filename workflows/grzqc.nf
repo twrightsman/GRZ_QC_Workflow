@@ -41,17 +41,27 @@ workflow GRZQC {
     fasta_38        = Channel.fromPath(params.fasta_38, checkIfExists: true)
                     .map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
 
-    rep_genes_38  = Channel.fromPath(params.rep_genes_hg38, checkIfExists: true).collect()
-
-    rep_genes_37  = Channel.fromPath(params.rep_genes_hg19, checkIfExists: true).collect()
-
-    bwa_index_37    = params.bwa_index_37   ? Channel.fromPath(params.bwa_index_37, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    bwa_index_37    = params.bwa_index_37   ? Channel.fromPath(params.bwa_index_37 , checkIfExists: true, type: 'dir').map{ file -> tuple([id: "hg19"], file) }.collect()
                                             : Channel.empty()
 
-    bwa_index_38    = params.bwa_index_38   ? Channel.fromPath(params.bwa_index_38, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    bwa_index_38    = params.bwa_index_38   ? Channel.fromPath(params.bwa_index_38 , checkIfExists: true, type: 'dir').map{ file -> tuple([id: "hg38"], file) }.collect()
                                             : Channel.empty()
 
-    thresholds  = Channel.fromPath("${projectDir}/assets/thresholds.json", checkIfExists: true).collect()
+    if (!params.thresholds){
+        thresholds  = Channel.fromPath("${projectDir}/assets/default_files/thresholds.json", checkIfExists: true).collect()
+    } else {
+        thresholds  = Channel.fromPath(params.thresholds, checkIfExists: true).collect()
+    }
+    if (!params.rep_genes_hg38){
+        rep_genes_38  = Channel.fromPath("${projectDir}/assets/default_files/hg38_440_omim_genes.bed", checkIfExists: true).collect()
+    } else {
+        rep_genes_38  = Channel.fromPath(params.rep_genes_hg38, checkIfExists: true).collect()
+    }
+    if (!params.rep_genes_hg19){
+        rep_genes_37  = Channel.fromPath("${projectDir}/assets/default_files/hg19_439_omim_genes.bed", checkIfExists: true).collect()
+    } else {
+        rep_genes_37  = Channel.fromPath(params.rep_genes_hg19, checkIfExists: true).collect()
+    }
 
     // Creating merge fastq channel from samplesheet
     ch_samplesheet.map{
@@ -115,6 +125,7 @@ workflow GRZQC {
 
     ch_bams = Channel.empty()
     // bwa index creation might be dropped
+
     if (!params.bwa_index_38){
         BWAMEM2_INDEX_HG38(fasta_38)
         ch_versions = ch_versions.mix(BWAMEM2_INDEX_HG38.out.versions.first())

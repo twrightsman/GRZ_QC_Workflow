@@ -1,6 +1,6 @@
 {
-    "name": "nf-core/grzqc",
-    "homePage": "https://github.com/nf-core/grzqc",
+    "name": "BfArM-MVH/GRZ_QC_Workflow",
+    "homePage": "https://github.com/BfArM-MVH/GRZ_QC_Workflow",
     "repos": {
         "https://github.com/nf-core/modules.git": {
             "modules": {
