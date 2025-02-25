@@ -106,6 +106,7 @@ def parse_args(args=None):
     )
     parser.add_argument("--fastp_json", "-f", required=True, help="fastp json file")
     parser.add_argument("--sample_id", "-i", required=True, help="sample id/meta.id")
+    parser.add_argument("--labDataName", "-n", required=True, help="labDataName")
     parser.add_argument("--libraryType", "-l", required=True, help="libraryType")
     parser.add_argument(
         "--sequenceSubtype", "-a", required=True, help="sequenceSubtype"
@@ -219,6 +220,7 @@ def main(args=None):
     qc_df = pd.DataFrame(
         {
             "sampleId": [args.sample_id],
+            "labDataName": [args.labDataName],
             "libraryType": [args.libraryType],
             "sequenceSubtype": [args.sequenceSubtype],
             "genomicStudySubtype": [args.genomicStudySubtype],

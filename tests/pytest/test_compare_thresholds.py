@@ -18,6 +18,8 @@ def test_compare_threshold():
         "tests/data/compare_thresholds/thresholds.json",
         "--sample_id",
         "a2b6c3d9e8f7123456789abcdef0123456789abcdef0123456789abcdef01234_Blood_DNA_normal",
+        "--labDataName",
+        "Blood DNA normal",
         "--libraryType",
         "wes",
         "--sequenceSubtype",

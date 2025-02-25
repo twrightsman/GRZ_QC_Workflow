@@ -13,6 +13,10 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
+            "labDataName": {
+                "type": "string",
+                "meta": ["labDataName"]
+            },
             "libraryType": {
                 "type": "string",
                 "pattern": "panel|wgs|wes|panel_lr|wgs_lr|wes_lr",
