@@ -1,75 +1,92 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-grzqc_logo_dark.png">
-    <img alt="nf-core/grzqc" src="docs/images/nf-core-grzqc_logo_light.png">
-  </picture>
-</h1>
-
 [![GitHub Actions CI Status](https://github.com/nf-core/grzqc/actions/workflows/ci.yml/badge.svg)](https://github.com/nf-core/grzqc/actions/workflows/ci.yml)
-[![GitHub Actions Linting Status](https://github.com/nf-core/grzqc/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/grzqc/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/grzqc/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 [![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A524.04.2-23aa62.svg)](https://www.nextflow.io/)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/nf-core/grzqc)
-
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23grzqc-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/grzqc)[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
 
 ## Introduction
 
-**nf-core/grzqc** is a bioinformatics pipeline that ...
+**BfArM-MVH/GRZ_QC_Workflow** performs extended quality control of GRZ submissions according to the defined thresholds.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and [`FASTP`](https://github.com/OpenGene/fastp))
+2. Alignment using ([`BWAMEM2`](https://github.com/bwa-mem2/bwa-mem2))
+3. Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
+4. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
-1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
-2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+## Setup
+
+- Install nextflow (and dependencies)
+- Make sure to have either conda, docker or singularity.
+- Clone the github repository
+
+```bash
+git clone https://github.com/BfArM-MVH/GRZ_QC_Workflow.git
+$output_path = "path/to/analysis/dir"
+```
+
+### Setting up reference files
+
+> [!WARNING]
+BWAMEM2 index folder is required for this folder can be either used directly or can be produced through the first run (using grzqc profile) of this pipeline.
+
+- You can also run Download necessary reference fasta files and place into /references directory.
+
+```bash
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
+mv hg19.fa.gz $output_path/references
+wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
+mv hg38.fa.gz $output_path/references
+```
+
 
 ## Usage
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet:
 
-This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet and then uses this samplesheet to run the nextflow pipeline. 
+```bash
+python3 metadata_to_samplesheet.py $submission_base_path $output_path
+```
 
 Now, you can run the pipeline using:
 
-```bash run_grzqc.sh <Submission_base_directory_path> <OUTDIR>
+```bash
+nextflow run GRZ_QC_Workflow/main.nf -profile grzqc,docker --outdir $output_path --input $output_path"/grzqc_samplesheet.csv"
 ```
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
-
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/grzqc/usage) and the [parameter documentation](https://nf-co.re/grzqc/parameters).
+For your next run, you can use prebuild references. Please prepare your own config file to do so.
 
 ## Pipeline output
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/grzqc/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/grzqc/output).
+Output :
+
+| Column    | Description                                                                                                                                                                            |
+| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Sample_id`  | Sample id                                                          |
+| `libraryType` | ......                                                            |
+| `sequenceSubtype` | .......                                                       |
+| `genomicStudySubtype` | .......                                                       |
+| `q30_rate` | .......                                                       |
+| `Q30_THRESHOLD` | .......                                                       |
+| `Mosdepth_cov` | .......                                                       |
+| `MEAN_DEPTH_THRESHOLD` | .......                                                       |
+| `Mosdepth_cov_ratio_target_genes` | .......                                                       |
+| `TARGET_FRACTION_ABOVE_THRESHOLD` | .......                                                       |
+| `Quality_check` | .......                                                       |
+
 
 ## Credits
 
-nf-core/grzqc was originally written by Shounak Chakraborty.
-
-We thank the following people for their extensive assistance in the development of this pipeline:
-
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+This project is under project of ..
 
 ## Contributions and Support
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+nf-core/grzqc was originally written by Shounak Chakraborty, Yun Wang, Kuebra Narci and Florian R. Hölzlwimmer
+ .
 
-For further information or help, don't hesitate to get in touch on the [Slack `#grzqc` channel](https://nfcore.slack.com/channels/grzqc) (you can join with [this invite](https://nf-co.re/join/slack)).
+
 
 ## Citations
 
@@ -87,4 +104,4 @@ You can cite the `nf-core` publication as follows:
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-> 
+>
