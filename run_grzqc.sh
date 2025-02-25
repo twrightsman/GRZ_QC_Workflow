@@ -6,9 +6,15 @@ submission_basepath="$1"
 output_basepath="$2"
 
 # create output directories
-mkdir "${output_basepath}/"
-mkdir "${output_basepath}/work/"
-mkdir "${output_basepath}/grzqc_output/"
+for dir in \
+    "${output_basepath}/" \
+    "${output_basepath}/work/" \
+    "${output_basepath}/grzqc_output/"
+do
+    if [[ ! -e $dir ]]; then
+        mkdir "$dir"
+    fi
+done
 
 # create samplesheet
 tmp_samplesheet_path="$(mktemp)"
