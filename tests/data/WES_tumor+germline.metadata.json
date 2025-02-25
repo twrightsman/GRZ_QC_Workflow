@@ -61,7 +61,7 @@
                     "sequenceData": {
                         "bioinformaticsPipelineName": "DNASeq_Pipeline_XYZ",
                         "bioinformaticsPipelineVersion": "v3.4.1",
-                        "referenceGenome": "hg19",
+                        "referenceGenome": "GRCh37",
                         "percentBasesAboveQualityThreshold": {
                                 "minimumQuality": 30,
                                 "percent": 90
@@ -117,7 +117,7 @@
                                 "readOrder": "R2",
                                 "flowcellId": "NIST7035",
                                 "laneId": "2"
-                            },                
+                            },
                             {
                                 "filePath": "donor_001/project.NIST.hc.snps.indels.vcf",
                                 "fileType": "vcf",
@@ -162,7 +162,7 @@
                     "sequenceData": {
                         "bioinformaticsPipelineName": "DNASeq_Pipeline_XYZ",
                         "bioinformaticsPipelineVersion": "v3.4.1",
-                        "referenceGenome": "hg19",
+                        "referenceGenome": "GRCh37",
                         "percentBasesAboveQualityThreshold": {
                                 "minimumQuality": 50,
                                 "percent": 88

@@ -1,14 +1,43 @@
 #!/usr/bin/env python3
 
-import json
-import csv
+
 import argparse
-import re
-import os
-from typing import List, Dict
+import pandas as pd
+import json
+from itertools import groupby
+from typing import Dict, Any, Generator
+
+from pathlib import Path
 
 
-def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
+def determine_fastq_pairs(fastq_files: list[dict]) -> list[tuple[dict, dict]]:
+    key = lambda f: (f.get("flowcellId", ""), f.get("laneId", ""))
+
+    retval = []
+
+    fastq_files.sort(key=key)
+    for _key, group in groupby(fastq_files, key):
+        files = list(group)
+
+        # separate R1 and R2 files
+        fastq_r1_files = [f for f in files if f.get("readOrder") == "R1"]
+        fastq_r2_files = [f for f in files if f.get("readOrder") == "R2"]
+
+        assert len(fastq_r1_files) == 1, (
+            f"Expected one R1 file, but got {len(fastq_r1_files)}"
+        )
+        assert len(fastq_r2_files) == 1, (
+            f"Expected one R2 file, but got {len(fastq_r2_files)}"
+        )
+
+        retval.append((fastq_r1_files[0], fastq_r2_files[0]))
+
+    return retval
+
+
+def extract_data(
+    json_data: Dict, submission_base_path: str | Path
+) -> Generator[dict[str, Path | str | Any], Any, list[Any]]:
     """
     Extract specific fields from the GRZ schema JSON data.
 
@@ -20,91 +49,104 @@ def extract_data(json_data: Dict, submission_base_path) -> List[List[str]]:
         Each inner list represents a row with the following columns:
         [sample, fastq1, fastq2, bed_file, reference]
     """
+    submission_base_path = Path(submission_base_path)
+
     data = []
     submission = json_data["submission"]
-    genomicStudySubtype = submission.get("genomicStudySubtype", "")
+    genomic_study_subtype = submission.get("genomicStudySubtype", "")
 
     donors = json_data["donors"]
 
     for donor in donors:
         case_id = donor.get("tanG", "")
-        print(case_id)
-        lab_data_list = donor.get("labData", [])
+        lab_data = donor.get("labData", [])
 
-        for lab_data in lab_data_list:
-            # print("---------- Lab data ---------------")
-            # print(lab_data)
-            lab_data_name = lab_data.get("labDataName", "").replace(" ", "_")
-            libraryType = lab_data.get("libraryType", [])
-            sequenceSubtype = lab_data.get("sequenceSubtype", [])
-            sequence_data = lab_data.get("sequenceData", [])
+        for lab_datum in lab_data:
+            lab_data_name = lab_datum["labDataName"]
 
-            # print(sequence_data)
-            # for sequence_data in sequence_data_list:
-            # print("---------- Sequence data ---------------")
-            # print(sequence_data)
+            # derive sample_id from case_id and lab_data_name
+            sample_id = f"""{case_id}_{lab_data_name.replace(" ", "_")}"""
+
+            library_type = lab_datum["libraryType"]
+            sequence_subtype = lab_datum["sequenceSubtype"]
+            sequence_data = lab_datum.get("sequenceData", [])
+            sequencing_layout = lab_datum["sequencingLayout"]
+
             files = sequence_data.get("files", [])
-            sample = f"{case_id}_{lab_data_name}"
-            bed_file = ""
-            reference = sequence_data.get("referenceGenome", [])
-            # print(reference)
-            fastq_files = {"R1": [], "R2": []}
-            for file in files:
-                file_path = submission_base_path + "/files/" + file.get("filePath", "")
-                file_type = file.get("fileType", "")
 
-                if file_type == "fastq":
-                    if re.search(r"(R1|read1)", file_path, re.IGNORECASE):
-                        fastq_files["R1"].append(file_path)
-                    elif re.search(r"(R2|read2)", file_path, re.IGNORECASE):
-                        fastq_files["R2"].append(file_path)
-                elif file_type == "bed":
-                    bed_file = file_path
+            # determine file structure for this lab datum
+            reference = sequence_data["referenceGenome"]
+            fastq_files = [f for f in files if f["fileType"] == "fastq"]
+            bed_file = [f for f in files if f["fileType"] == "bed"][
+                0
+            ]  # there should be only one bed file
+            bed_file_path = (
+                submission_base_path / "files" / bed_file["filePath"]
+            ).absolute()
 
-            # Match R1 and R2 files
-            for r1_file in fastq_files["R1"]:
-                r1_base = re.sub(r"(R1|read1)", "", r1_file, flags=re.IGNORECASE)
-                for r2_file in fastq_files["R2"]:
-                    r2_base = re.sub(r"(R2|read2)", "", r2_file, flags=re.IGNORECASE)
-                    if r1_base == r2_base:
-                        data.append(
-                            [
-                                sample,
-                                libraryType,
-                                sequenceSubtype,
-                                genomicStudySubtype,
-                                r1_file,
-                                r2_file,
-                                bed_file,
-                                reference,
-                            ]
-                        )
-                        break
-    return data
+            if sequencing_layout == "paired":
+                for fastq_r1, fastq_r2 in determine_fastq_pairs(fastq_files):
+                    fastq_r1_file_path = (
+                        submission_base_path / "files" / fastq_r1["filePath"]
+                    ).absolute()
+                    fastq_r2_file_path = (
+                        submission_base_path / "files" / fastq_r2["filePath"]
+                    ).absolute()
+
+                    yield {
+                        "sample": sample_id,
+                        "labDataName": lab_data_name,
+                        "libraryType": library_type,
+                        "sequenceSubtype": sequence_subtype,
+                        "genomicStudySubtype": genomic_study_subtype,
+                        "fastq_1": str(fastq_r1_file_path),
+                        "fastq_2": str(fastq_r2_file_path),
+                        "bed_file": str(bed_file_path),
+                        "reference": reference,
+                    }
+            else:
+                for fastq_file in fastq_files:
+                    fastq_file_path = (
+                        submission_base_path / "files" / fastq_file["filePath"]
+                    ).absolute()
+
+                    yield {
+                        "sample": sample_id,
+                        "labDataName": lab_data_name,
+                        "libraryType": library_type,
+                        "sequenceSubtype": sequence_subtype,
+                        "genomicStudySubtype": genomic_study_subtype,
+                        "fastq_1": str(fastq_file_path),
+                        # "fastq_2": "",
+                        "bed_file": str(bed_file_path),
+                        "reference": reference,
+                    }
 
 
-def main():
+def parse_args(args=None):
     parser = argparse.ArgumentParser(
         description="Extract data from GRZ schema JSON and create a CSV file."
     )
     parser.add_argument(
+        "submission_metadata_json",
+        help="Path to the submission metadata JSON file",
+    )
+    parser.add_argument(
         "submission_base_path",
-        help="Complete path to the root directory of the submission",
+        help="Path to the submission base directory",
     )
     parser.add_argument("output_file", help="Output path of the samplesheet CSV file")
-    args = parser.parse_args()
+    return parser.parse_args(args)
 
-    # Check if the submission base path exists
-    if not os.path.isdir(args.submission_base_path):
-        print(
-            f"Error: The submission base path '{args.submission_base_path}' does not exist."
-        )
-        return
 
-    metadata_file = args.submission_base_path + "metadata/metadata.json"
-    output_file = args.output_file
-    # print(metadata_file)
+def main(args=None):
+    args = parse_args(args)
 
+    submission_base_path = Path(args.submission_base_path)
+    metadata_file = Path(args.submission_metadata_json)
+    output_file = Path(args.output_file)
+
+    # read the metadata.json file
     try:
         with open(metadata_file, "r") as f:
             json_data = json.load(f)
@@ -115,25 +157,21 @@ def main():
         print(f"Error: The file '{metadata_file}' was not found.")
         return
 
-    # print(json_data['submission']['submissionDate'])
-    extracted_data = extract_data(json_data, args.submission_base_path)
-    # print(extracted_data)
+    extracted_data = list(extract_data(json_data, submission_base_path))
+    samples_df = pd.DataFrame.from_records(extracted_data)
+
+    with pd.option_context(
+        "display.max_rows",
+        None,
+        "display.max_columns",
+        None,
+        "display.max_colwidth",
+        None,
+    ):
+        print(samples_df)
+
     try:
-        with open(output_file, "w", newline="") as f:
-            writer = csv.writer(f)
-            writer.writerow(
-                [
-                    "sample",
-                    "libraryType",
-                    "sequenceSubtype",
-                    "genomicStudySubtype",
-                    "fastq_1",
-                    "fastq_2",
-                    "bed_file",
-                    "reference",
-                ]
-            )
-            writer.writerows(extracted_data)
+        samples_df.to_csv(output_file, index=False)
         print(f"Data has been extracted and saved to '{output_file}'")
     except PermissionError:
         print(f"Error: Permission denied when trying to write to '{output_file}'.")

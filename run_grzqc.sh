@@ -14,7 +14,8 @@ mkdir "${output_basepath}/grzqc_output/"
 tmp_samplesheet_path="$(mktemp)"
 
 python3 bin/metadata_to_samplesheet.py \
-    "$submission_basepath" \
+    "${submission_basepath}/metadata/metadata.json" \
+    "${submission_basepath}" \
     "$tmp_samplesheet_path"
 
 # check if the contents are equal, otherwise copy the new samplesheet to the output directory
