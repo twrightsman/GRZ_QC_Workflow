@@ -77,12 +77,21 @@ def extract_data(
             # determine file structure for this lab datum
             reference = sequence_data["referenceGenome"]
             fastq_files = [f for f in files if f["fileType"] == "fastq"]
-            bed_file = [f for f in files if f["fileType"] == "bed"][
-                0
-            ]  # there should be only one bed file
-            bed_file_path = (
-                submission_base_path / "files" / bed_file["filePath"]
-            ).absolute()
+
+            bed_files = [f for f in files if f["fileType"] == "bed"]
+            # there should be at most one bed file
+            assert len(bed_files) < 2, (
+                "More than one bed file specified in the submission metadata!"
+            )
+
+            if len(bed_files) > 0:
+                bed_file = bed_files[0]
+                bed_file_path = (
+                    submission_base_path / "files" / bed_file["filePath"]
+                ).absolute()
+            else:
+                bed_file = None
+                bed_file_path = None
 
             if sequencing_layout == "paired-end":
                 for fastq_r1, fastq_r2 in determine_fastq_pairs(fastq_files):
@@ -101,7 +110,9 @@ def extract_data(
                         "genomicStudySubtype": genomic_study_subtype,
                         "fastq_1": str(fastq_r1_file_path),
                         "fastq_2": str(fastq_r2_file_path),
-                        "bed_file": str(bed_file_path),
+                        "bed_file": (
+                            str(bed_file_path) if bed_file_path is not None else None
+                        ),
                         "reference": reference,
                     }
             else:
@@ -117,8 +128,10 @@ def extract_data(
                         "sequenceSubtype": sequence_subtype,
                         "genomicStudySubtype": genomic_study_subtype,
                         "fastq_1": str(fastq_file_path),
-                        # "fastq_2": "",
-                        "bed_file": str(bed_file_path),
+                        "fastq_2": None,
+                        "bed_file": (
+                            str(bed_file_path) if bed_file_path is not None else None
+                        ),
                         "reference": reference,
                     }
 
