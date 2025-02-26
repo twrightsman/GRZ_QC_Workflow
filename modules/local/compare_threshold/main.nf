@@ -17,14 +17,17 @@ process COMPARE_THRESHOLD {
     script:
     """
     compare_threshold.py \\
-        --fastp_json ${fastp_json} \\
-        --summary ${summary} \\
-        --bed ${bed} \\
-        --thresholds ${thresholds} \\
-        --sample_id ${meta.id} \\
-        --libraryType ${meta.libraryType} \\
-        --sequenceSubtype ${meta.sequenceSubtype} \\
-        --genomicStudySubtype ${meta.genomicStudySubtype}
+        --sample_id "${meta.id}" \\
+        --labDataName "${meta.labDataName}" \\
+        --libraryType "${meta.libraryType}" \\
+        --sequenceSubtype "${meta.sequenceSubtype}" \\
+        --genomicStudySubtype "${meta.genomicStudySubtype}" \\
+        --fastp_json "${fastp_json}" \\
+        --mosdepth_global_summary "${summary}" \\
+        --mosdepth_target_regions_bed "${bed}" \\
+        --thresholds "${thresholds}" \\
+        --output "${meta.id}.result.csv"
+
 
 
     cat <<-END_VERSIONS > versions.yml

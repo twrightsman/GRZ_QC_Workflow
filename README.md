@@ -47,13 +47,20 @@ mv hg38.fa.gz $output_path/references
 This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet:
 
 ```bash
-python3 metadata_to_samplesheet.py $submission_base_path $output_path
+python3 bin/metadata_to_samplesheet.py \
+    "${submission_basepath}" \
+    "${output_basepath}/grzqc_output/grzqc_samplesheet.csv"
 ```
 
 Now, you can run the pipeline using:
 
 ```bash
-nextflow run GRZ_QC_Workflow/main.nf -profile grzqc,docker --outdir $output_path --input $output_path"/grzqc_samplesheet.csv"
+nextflow run main.nf \
+    -profile grzqc,conda \
+    --outdir "${output_basepath}/grzqc_output/" \
+    -work-dir "${output_basepath}/work/" \
+    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    -resume
 ```
 
 For your next run, you can use prebuild references. Please prepare your own config file to do so.

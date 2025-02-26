@@ -1,18 +1,36 @@
 #!/bin/bash
-#SBATCH --nodes=1
-#SBATCH --ntasks 1 --cpus-per-task 50
-#SBATCH --partition=urgent
 
-submission_base_path=/s/public_webshare/public/grz-example-submissions/WES_tumor+germline/
-output_path=/data/ceph/ssd/scratch/tmp/wayu0/grz_qc_workflow/
-mkdir -p $output_path"/grzqc_output/"
+set -e
 
-source /data/nasif12/modules_if12/SL7/i12g/miniforge/24.9.0-0/etc/profile.d/conda.sh
+submission_basepath="$1"
+output_basepath="$2"
 
-# conda activate nextflow_flo
-python3 metadata_to_samplesheet.py $submission_base_path $output_path"/grzqc_output/"
+# create output directories
+for dir in \
+    "${output_basepath}/" \
+    "${output_basepath}/work/" \
+    "${output_basepath}/grzqc_output/"
+do
+    if [[ ! -e $dir ]]; then
+        mkdir "$dir"
+    fi
+done
 
-export NXF_HOME=/data/ceph/ssd/scratch/tmp/wayu0/grz_qc_workflow/nextflow_cache_WES
+# create samplesheet
+tmp_samplesheet_path="$(mktemp)"
 
-nextflow run main.nf -profile grzqc,conda --outdir $output_path"/grzqc_output/" -work-dir "${output_path}/work/" --input $output_path"/grzqc_output/grzqc_samplesheet.csv" -resume
-conda deactivate
+python3 bin/metadata_to_samplesheet.py \
+    "${submission_basepath}" \
+    "$tmp_samplesheet_path"
+
+# check if the contents are equal, otherwise copy the new samplesheet to the output directory
+cmp --silent "$tmp_samplesheet_path" "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" || \
+    cp "$tmp_samplesheet_path" "${output_basepath}/grzqc_output/grzqc_samplesheet.csv"
+
+# run nextflow
+nextflow run main.nf \
+    -profile grzqc,conda \
+    --outdir "${output_basepath}/grzqc_output/" \
+    -work-dir "${output_basepath}/work/" \
+    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    -resume
