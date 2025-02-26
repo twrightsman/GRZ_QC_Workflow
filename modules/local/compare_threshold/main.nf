@@ -26,7 +26,7 @@ process COMPARE_THRESHOLD {
         --mosdepth_global_summary ${summary} \\
         --mosdepth_target_regions_bed ${bed} \\
         --thresholds ${thresholds} \\
-        --output_file ${meta.id}.result.csv
+        --output ${meta.id}.result.csv
 
 
 
