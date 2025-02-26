@@ -158,7 +158,7 @@
                     "enrichmentKitManufacturer": "Illumina",
                     "enrichmentKitDescription": "Nextera Rapid Capture Exome",
                     "barcode": "NA12345",
-                    "sequencingLayout": "paired-end",
+                    "sequencingLayout": "single-end",
                     "sequenceData": {
                         "bioinformaticsPipelineName": "DNASeq_Pipeline_XYZ",
                         "bioinformaticsPipelineVersion": "v3.4.1",
@@ -185,7 +185,6 @@
                                 "checksumType": "sha256",
                                 "fileChecksum": "6ac9d8c547bfcd8cdd6b7a5b3ab95d7ae81e7c505aef18658a8e3ee1a0224324",
                                 "fileSizeInBytes": 2037956271,
-                                "readOrder": "R1",
                                 "flowcellId": "NIST7086",
                                 "laneId": "1"
                             },
@@ -195,7 +194,6 @@
                                 "checksumType": "sha256",
                                 "fileChecksum": "850783a1cb8234737906a36cb9678e83c94db6d5960a9484b8beec72f3497dbf",
                                 "fileSizeInBytes": 2081364133,
-                                "readOrder": "R2",
                                 "flowcellId": "NIST7086",
                                 "laneId": "1"
                             },
@@ -205,7 +203,6 @@
                                 "checksumType": "sha256",
                                 "fileChecksum": "ee039623aeebffb59308c632a1ce10a76e3e117ed79a981db635acc690344429",
                                 "fileSizeInBytes": 2083510543,
-                                "readOrder": "R1",
                                 "flowcellId": "NIST7086",
                                 "laneId": "2"
                             },
@@ -215,7 +212,6 @@
                                 "checksumType": "sha256",
                                 "fileChecksum": "1abe7d228b505daafdd43429d8da1de7cdcacdd8b9ae5bfadbd06e56ec435e56",
                                 "fileSizeInBytes": 2125471805,
-                                "readOrder": "R2",
                                 "flowcellId": "NIST7086",
                                 "laneId": "2"
                             },

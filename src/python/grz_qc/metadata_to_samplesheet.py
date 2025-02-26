@@ -84,7 +84,7 @@ def extract_data(
                 submission_base_path / "files" / bed_file["filePath"]
             ).absolute()
 
-            if sequencing_layout == "paired":
+            if sequencing_layout == "paired-end":
                 for fastq_r1, fastq_r2 in determine_fastq_pairs(fastq_files):
                     fastq_r1_file_path = (
                         submission_base_path / "files" / fastq_r1["filePath"]
