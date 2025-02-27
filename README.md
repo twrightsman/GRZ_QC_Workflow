@@ -92,46 +92,26 @@ For your next run, you can use prebuild references. Please prepare your own conf
 
 Output :
 
-| Column    | Description                                                                                                                                                                            |
-| --------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Sample_id`  | Sample id                                                          |
-| `libraryType` | ......                                                            |
-| `sequenceSubtype` | .......                                                       |
-| `genomicStudySubtype` | .......                                                       |
-| `q30_rate` | .......                                                       |
-| `Q30_THRESHOLD` | .......                                                       |
-| `Mosdepth_cov` | .......                                                       |
-| `MEAN_DEPTH_THRESHOLD` | .......                                                       |
-| `Mosdepth_cov_ratio_target_genes` | .......                                                       |
-| `TARGET_FRACTION_ABOVE_THRESHOLD` | .......                                                       |
-| `Quality_check` | .......                                                       |
+| Column                                       | Description                                                                                     |
+|----------------------------------------------|-------------------------------------------------------------------------------------------------|
+| `sampleId`                                   | Sample ID                                                                                       |
+| `labDataName`                                | Lab data name                                                                                   |
+| `libraryType`                                | Library type, e.g., `wes` for whole-exome sequencing                                            |
+| `sequenceSubtype`                            | Sequence subtype, e.g., `somatic` or `germline`                                                 |
+| `genomicStudySubtype`                        | Genomic study subtype, e.g., `tumor+germline`                                                   |
+| `meanDepthOfCoverage`                        | Mean depth of coverage                                                                          |
+| `meanDepthOfCoverageRequired`                | Mean depth of coverage required to pass QC                                                      |
+| `fractionBasesAboveQualityThreshold`         | Fraction of bases passing the quality threshold                                                 |
+| `qualityThreshold`                           | The quality threshold to pass                                                                   |
+| `fractionBasesAboveQualityThresholdRequired` | Fraction of bases above the quality threshold required to pass QC                               |
+| `targetedRegionsAboveMinCoverage`            | Fraction of targeted regions above minimum coverage                                             |
+| `minCoverage`                                | Minimum coverage for target regions                                                             |
+| `targetedRegionsAboveMinCoverageRequired`    | Fraction of targeted regions above minimum coverage required to pass QC                         |
+| `passedQC`                                   | `true` when QC passed, otherwise `false`                                                        |
 
 
-## Credits
-
-This project is under project of ..
 
 ## Contributions and Support
 
-nf-core/grzqc was originally written by Shounak Chakraborty, Yun Wang, Kuebra Narci and Florian R. Hölzlwimmer
- .
+**BfArM-MVH/GRZ_QC_Workflow** was originally written by Shounak Chakraborty, Yun Wang, Kübra Narci and Florian R. Hölzlwimmer.
 
-
-
-## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/grzqc for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
-
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
-
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-
-You can cite the `nf-core` publication as follows:
-
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
->
