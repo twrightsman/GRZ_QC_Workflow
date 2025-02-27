@@ -29,22 +29,46 @@ $output_path = "path/to/analysis/dir"
 
 ### Setting up reference files
 
-> [!WARNING]
-BWAMEM2 index folder is required for this folder can be either used directly or can be produced through the first run (using grzqc profile) of this pipeline.
+This pipeline will automatically download the necessary reference genomes.
 
-- You can also run Download necessary reference fasta files and place into /references directory.
+> [!Tip]
 
+To skip downloading the reference genomes, you can also download necessary reference genome FASTA files to some shared location:
 ```bash
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
-mv hg19.fa.gz $output_path/references
+mv hg19.fa.gz $shared_directory/references
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
-mv hg38.fa.gz $output_path/references
+mv hg38.fa.gz $shared_directory/references
 ```
+Then you can update the file paths in `conf/grzqc.conf`:
+```bash
+params {
+    [...]
+    fasta_37 = "$shared_directory/references/hg19.fa.gz"
+    fasta_38 = "$shared_directory/references/hg38.fa.gz"
+}
+```
+by replacing `$shared_directory` with the absolute path to the shared directory.
+
+After the first run, you can also copy the BWAMEM2 index to the shared directory:
+```bash
+cp -r "${output_basepath}/grzqc_output/references/" "$shared_directory/references/"
+```
+and configure it in `conf/grzqc.conf`:
+```bash
+params {
+    [...]
+    bwa_index_37 = "$shared_directory/references/GRCh37/bwamem2"
+    bwa_index_38 = "$shared_directory/references/GRCh38/bwamem2"
+
+}
+```
+by replacing `$shared_directory` with the absolute path to the shared directory.
 
 
 ## Usage
 
-This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script run_grzqc.sh parses the metadata.json file to create a nextflow samplesheet:
+This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script `run_grzqc.sh` parses the metadata.json file to create a nextflow samplesheet:
 
 ```bash
 python3 bin/metadata_to_samplesheet.py \
