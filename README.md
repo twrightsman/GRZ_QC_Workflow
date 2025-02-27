@@ -29,11 +29,10 @@ $output_path = "path/to/analysis/dir"
 
 ### Setting up reference files
 
-This pipeline will automatically download the necessary reference genomes.
+This pipeline will automatically download the necessary reference genomes and creates an BWA index from them.
+However, when running this pipeline multiple times on different submissions, the download and indexing steps create unnecessary overhead.
 
-> [!Tip]
-
-To skip downloading the reference genomes, you can also download necessary reference genome FASTA files to some shared location:
+To skip downloading the reference genomes, you can also download the necessary reference genome FASTA files to some shared location:
 ```bash
 wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
 mv hg19.fa.gz $shared_directory/references
