@@ -10,13 +10,13 @@ process MERGE_REPORTS {
         path (csv_files)
 
     output:
-        path "merged_result.csv"
-        path "merged_result.xlsx"
+        path "report.csv"
+        path "report.xlsx"
         path('versions.yml')      , emit: versions
 
     script:
     """
-    merge_reports.py $csv_files
+    merge_reports.py $csv_files --output_prefix "report"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -25,8 +25,8 @@ process MERGE_REPORTS {
     """
     stub:
     """
-    touch merged_result.csv
-    touch merged_result.xlsx
+    touch report.csv
+    touch report.xlsx
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
