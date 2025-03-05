@@ -49,32 +49,11 @@
             "fa_icon": "fas fa-dna",
             "description": "Reference genome related files and options required for the workflow.",
             "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "Name of iGenomes reference.",
-                    "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`. \n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
-                },
-                "igenomes_ignore": {
-                    "type": "boolean",
-                    "description": "Do not load the iGenomes reference config.",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
-                },
-                "igenomes_base": {
-                    "type": "string",
-                    "format": "directory-path",
-                    "description": "The base path to the igenomes reference files",
-                    "fa_icon": "fas fa-ban",
-                    "hidden": true,
-                    "default": "s3://ngi-igenomes/igenomes/"
-                },
                 "bwa_index_37": {
                     "type": "string",
-                    "description": "Path to the GRCh37 BWAMEM2 index.",
+                    "description": "Path to the hg19 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the GRCh37 BWAMEM2 index. This parameter will be automatically created if not specified."
+                    "help_text": "Path to the hg19 BWAMEM2 index. This parameter will be automatically created if not specified."
                 },
                 "fasta_37": {
                     "type": "string",
@@ -82,15 +61,15 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to HG37 FASTA genome file.",
+                    "description": "Path to hg19 FASTA genome file.",
                     "help_text": "This parameter is *mandatory* automatically",
                     "fa_icon": "far fa-file-code"
                 },
                 "bwa_index_38": {
                     "type": "string",
-                    "description": "Path to the GRCh38 BWAMEM2 index.",
+                    "description": "Path to the hg38 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the GRCh38 BWAMEM2 index. This parameter will be automatically created if not specified."
+                    "help_text": "Path to the hg38 BWAMEM2 index. This parameter will be automatically created if not specified."
                 },
                 "fasta_38": {
                     "type": "string",
@@ -98,7 +77,7 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to HG38 FASTA genome file.",
+                    "description": "Path to hg38 FASTA genome file.",
                     "help_text": "This parameter is *mandatory* automatically",
                     "fa_icon": "far fa-file-code"
                 },
