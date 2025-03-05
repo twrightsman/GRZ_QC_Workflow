@@ -51,9 +51,9 @@
             "properties": {
                 "bwa_index_37": {
                     "type": "string",
-                    "description": "Path to the hg19 BWAMEM2 index.",
+                    "description": "Path to the GRCh37 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the hg19 BWAMEM2 index. This parameter will be automatically created if not specified."
+                    "help_text": "Path to the GRCh37 BWAMEM2 index. This parameter will be automatically created if not specified."
                 },
                 "fasta_37": {
                     "type": "string",
@@ -61,15 +61,15 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to hg19 FASTA genome file.",
+                    "description": "Path to GRCh37 FASTA genome file.",
                     "help_text": "This parameter is *mandatory* automatically",
                     "fa_icon": "far fa-file-code"
                 },
                 "bwa_index_38": {
                     "type": "string",
-                    "description": "Path to the hg38 BWAMEM2 index.",
+                    "description": "Path to the GRCh38 BWAMEM2 index.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "Path to the hg38 BWAMEM2 index. This parameter will be automatically created if not specified."
+                    "help_text": "Path to the GRCh38 BWAMEM2 index. This parameter will be automatically created if not specified."
                 },
                 "fasta_38": {
                     "type": "string",
@@ -77,7 +77,7 @@
                     "exists": true,
                     "mimetype": "text/plain",
                     "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$",
-                    "description": "Path to hg38 FASTA genome file.",
+                    "description": "Path to GRCh38 FASTA genome file.",
                     "help_text": "This parameter is *mandatory* automatically",
                     "fa_icon": "far fa-file-code"
                 },
