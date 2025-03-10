@@ -12,6 +12,7 @@ include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq'
 include { FASTQC                 } from '../modules/nf-core/fastqc'
 include { FASTP                  } from '../modules/nf-core/fastp'
 include { MULTIQC                } from '../modules/nf-core/multiqc'
+include { CONVERT_BED_CHROM      } from '../modules/local/convert_bed_chrom'
 include { COMPARE_THRESHOLD      } from '../modules/local/compare_threshold'
 include { MERGE_REPORTS          } from '../modules/local/merge_reports'
 include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG38 } from '../subworkflows/nf-core/fastq_align_bwa'
@@ -62,6 +63,10 @@ workflow GRZQC {
     } else {
         rep_genes_37  = Channel.fromPath(params.rep_genes_hg19, checkIfExists: true).collect()
     }
+
+    chrom_mapping_37 = Channel.value(file("${projectDir}/assets/default_files/hg19_NCBI2UCSC.txt"))
+    chrom_mapping_38 = Channel.value(file("${projectDir}/assets/default_files/hg38_NCBI2UCSC.txt"))
+
 
     // Creating merge fastq channel from samplesheet
     ch_samplesheet.map{
@@ -162,19 +167,42 @@ workflow GRZQC {
                 .mix(FASTQ_ALIGN_BWA_HG37.out.bam
                     .join(FASTQ_ALIGN_BWA_HG37.out.bai, by:0))
 
-    // prepare mosdepth inputs
-    ch_samplesheet
-        .map{meta, fastqs, bed_file -> tuple(meta, bed_file.first())}
-        .join(ch_bams, by:0)
-        .map{meta, bed_file, bam, bai -> tuple(meta, bam, bai, bed_file )}
-        .branch{
+    // prepare mosdepth inputs               
+    // Prepare bed files for conversion: extract bed from samplesheet and attach the correct mapping file.
+    ch_bed_for_conversion = ch_samplesheet.map { meta, fastqs, bed_file ->
+        def bed = bed_file.first()
+        def mapping = (meta.reference == "GRCh38" || meta.reference == "hg38") ? chrom_mapping_38.getVal():
+                      ((meta.reference == "GRCh37" || meta.reference == "hg19") ? chrom_mapping_37.getVal(): null)
+        return tuple(meta, bed, mapping)
+    }
+    
+    // Run the conversion process: if the bed file has UCSC-style names, they will be converted.
+    CONVERT_BED_CHROM(
+        ch_bed_for_conversion
+    )
+    ch_converted_bed = CONVERT_BED_CHROM.out.converted_bed
+    ch_versions = ch_versions.mix(CONVERT_BED_CHROM.out.versions)
+
+    // prepare mosdepth inputs with converted bed file
+    ch_mosdepth_input = ch_samplesheet
+        .map { meta, fastqs, bed_file -> tuple(meta, bed_file.first()) }
+        .join(ch_bams, by: 0)
+        .join(ch_converted_bed, by: 0)
+        .map { joined ->
+            def meta = joined[0]
+            def originalBed = joined[1]   // oringal bed, ignore
+            def bam = joined[2]
+            def bai = joined[3]
+            def converted_bed = joined[4]
+            return tuple(meta, bam, bai, converted_bed)
+        }
+        .branch {
             def meta = it[0]
             hg38: meta.reference == "GRCh38" || meta.reference == "hg38"
             hg37: meta.reference == "GRCh37" || meta.reference == "hg19"
-            other:false
+            other: false
         }
-        .set{ch_mosdepth_input}
-
+    
     // hg38 mosdepth analysis
     MOSDEPTH_MOSDEPTH_TARGET_HG38(
         ch_mosdepth_input.hg38,

@@ -94,7 +94,7 @@
                     "help_text": "Path to the hg38 bed file of ~ 400 representative target genes."
                 }
                 ,
-                "threshold": {
+                "thresholds": {
                     "type": "string",
                     "description": "Path to thresholds.json file.",
                     "fa_icon": "fas fa-book",
