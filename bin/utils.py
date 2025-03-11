@@ -1,1 +1,1 @@
-/data/nasif12/home_if12/wayu0/GRZ_QC_Workflow/src/python/grz_qc/utils.py
+../src/python/grz_qc/utils.py
