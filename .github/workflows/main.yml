@@ -41,4 +41,4 @@ jobs:
           if [[ $NXF_VER = '' ]]; then sleep 1200; fi
       - name: BASIC Run the basic pipeline with test profile
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir results
+          bash run_git.sh tests/data/ ${GITHUB_WORKSPACE}
