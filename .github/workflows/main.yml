@@ -33,11 +33,6 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-      - name: Install pandas
-        env:
-          CAPSULE_LOG: none
-        run: |
-          pip install pandas
       - name: HELPTEXT Run with the help flag
         run: |
           nextflow run ${GITHUB_WORKSPACE} --help
@@ -46,4 +41,4 @@ jobs:
           if [[ $NXF_VER = '' ]]; then sleep 1200; fi
       - name: BASIC Run the basic pipeline with test profile
         run: |
-          bash run_git.sh tests/data/ ${GITHUB_WORKSPACE}
+          nextflow run ${GITHUB_WORKSPACE} -profile test,singularity
