@@ -33,6 +33,11 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+      - name: Install pandas
+        env:
+          CAPSULE_LOG: none
+        run: |
+          pip install pandas
       - name: HELPTEXT Run with the help flag
         run: |
           nextflow run ${GITHUB_WORKSPACE} --help
