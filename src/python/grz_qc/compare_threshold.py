@@ -5,9 +5,7 @@ import gzip
 import json
 import argparse
 import sys
-
 from pathlib import Path
-
 
 def read_bed_file(
     file_path,
@@ -86,7 +84,6 @@ def read_bed_file(
     )
 
     return bed_df
-
 
 def parse_args(args=None):
     Description = "Compare the results with the thresholds."
