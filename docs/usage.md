@@ -134,7 +134,7 @@ Several generic profiles are bundled with the pipeline which instruct the pipeli
 We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
 :::
 
-If you want to use multiple config profiles for various institutional clusters available at run time. For more information and to see if your system is available in these configs please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation) and download manually to your conf directory.
+If you want to use multiple config profiles for various institutional clusters, they are available at nf-core/configs. For more information and to see if your system is available in these configs please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation) and download manually to your conf directory.
 
 Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
 They are loaded in sequence, so later profiles can overwrite earlier profiles.
