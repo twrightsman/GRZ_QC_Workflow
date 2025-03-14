@@ -4,7 +4,7 @@ process COMPARE_THRESHOLD {
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ed/ed624a85396ad8cfe079da9b0bf12bf9822bbebcbbe926c24bb49906665ed4be/data' :
-        'community.wave.seqera.io/library/pip_gzip-utils_openpyxl_pandas:b1a85fb63f75244d' }"
+        'community.wave.seqera.io/library/pip_gzip-utils_openpyxl_pandas:cd97ba68cc5b8463' }"
 
     input:
     tuple val(meta), path(bed), path(summary), path(fastp_json)
