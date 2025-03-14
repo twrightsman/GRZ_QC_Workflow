@@ -110,6 +110,32 @@ Output :
 | `passedQC`                                   | `true` when QC passed, otherwise `false`                                                        |
 
 
+## Running the pipeline offline
+
+Nextflow can automatically retrieve almost everything necessary to execute a pipeline from the web, including pipeline code, software dependencies, reference genomes, and remote data sources.
+
+However, if your analysis must run on a system without *internet access*, you will need to take a few additional steps to ensure all required components are available locally. First, download everything on an internet-connected system (such as your personal computer) and then transfer the files to the offline system using your preferred method.
+
+To set up an offline environment, you will need three key components: a functioning Nextflow installation, the pipeline assets, and the required reference genomes.
+
+On a computer with an internet connection, to download the pipeline, run:
+
+```bash
+nf-core pipelines download BfArM-MVH/GRZ_QC_Workflow
+```
+
+Add the argument `--container-system singularity` to also fetch the singularity container(s).
+
+Then download the necessary plugins and lace it under `${NXF_HOME}/plugins`:
+
+```bash
+nextflow plugin install nf-schema@2.1.1
+
+```
+
+
+For more detailed information please check ["Running offline by nf-core"](https://nf-co.re/docs/usage/getting_started/offline)
+
 
 ## Contributions and Support
 
