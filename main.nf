@@ -16,7 +16,6 @@
 include { GRZQC                   } from './workflows/grzqc'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_grzqc_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_grzqc_pipeline'
-include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_grzqc_pipeline'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,10 +23,6 @@ include { getGenomeAttribute      } from './subworkflows/local/utils_nfcore_grzq
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-// TODO nf-core: Remove this line if you don't need a FASTA file
-//   This is an example of how to use getGenomeAttribute() to fetch parameters
-//   from igenomes.config using `--genome`
-//params.fasta = getGenomeAttribute('fasta')
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
