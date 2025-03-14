@@ -1,5 +1,4 @@
-
-process MERGE_REPORTS {
+process CONVERT_BED_CHROM {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -7,26 +6,28 @@ process MERGE_REPORTS {
         'community.wave.seqera.io/library/pip_gzip-utils_openpyxl_pandas:cd97ba68cc5b8463' }"
 
     input:
-        path (csv_files)
-
+      tuple val(meta), path(bed_file), path(mapping_file)
+      
     output:
-        path "report.csv"
-        path "report.xlsx"
-        path('versions.yml')      , emit: versions
+      tuple val(meta), path("*.converted_bed.bed") , emit: converted_bed
+      path('versions.yml')      , emit: versions
 
     script:
     """
-    merge_reports.py $csv_files --output_prefix "report"
+    convert_bed_chrom.py \\
+        --bed ${bed_file} \\
+        --mapping ${mapping_file} \\
+        --output "${meta.id}.converted_bed.bed"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         python: \$(python --version | sed 's/Python //g')
     END_VERSIONS
     """
+
     stub:
     """
-    touch report.csv
-    touch report.xlsx
+    touch ${meta.id}.converted_bed.bed
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
