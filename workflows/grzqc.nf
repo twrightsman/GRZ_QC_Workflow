@@ -169,25 +169,38 @@ workflow GRZQC {
 
     // prepare mosdepth inputs               
     // Prepare bed files for conversion: extract bed from samplesheet and attach the correct mapping file.
-    ch_bed_for_conversion = ch_samplesheet.map { meta, fastqs, bed_file ->
+    ch_samplesheet.map { meta, fastqs, bed_file ->
         def bed = bed_file.first()
         def mapping = (meta.reference == "GRCh38" || meta.reference == "hg38") ? chrom_mapping_38.getVal():
                       ((meta.reference == "GRCh37" || meta.reference == "hg19") ? chrom_mapping_37.getVal(): null)
         return tuple(meta, bed, mapping)
-    }
+    }.set{ch_bed_for_conversion}
     
+    //  WGS does not need conversion
+    ch_bed_for_conversion.branch{
+        def meta = it[0]
+        target: meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
+        wgs: meta.libraryType in ["wgs", "wgs_lr"]
+        other:false
+    }.set{ch_bed_for_conversion_library}
+
     // Run the conversion process: if the bed file has UCSC-style names, they will be converted.
     CONVERT_BED_CHROM(
-        ch_bed_for_conversion
+        ch_bed_for_conversion_library.target
     )
     ch_converted_bed = CONVERT_BED_CHROM.out.converted_bed
     ch_versions = ch_versions.mix(CONVERT_BED_CHROM.out.versions)
+
+    // mix the converted bed file of WES and panel with the original WGS
+    ch_mosdepth_bed = ch_converted_bed.mix(
+        ch_bed_for_conversion_library.wgs.map { meta, bed, _ -> tuple(meta, bed) }
+    )
 
     // prepare mosdepth inputs with converted bed file
     ch_mosdepth_input = ch_samplesheet
         .map { meta, fastqs, bed_file -> tuple(meta, bed_file.first()) }
         .join(ch_bams, by: 0)
-        .join(ch_converted_bed, by: 0)
+        .join(ch_mosdepth_bed, by: 0)
         .map { joined ->
             def meta = joined[0]
             def originalBed = joined[1]   // oringal bed, ignore
