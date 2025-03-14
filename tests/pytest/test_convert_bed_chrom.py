@@ -37,8 +37,5 @@ def test_convert_bed_chrom(bed_input_name, expected_output_file, monkeypatch):
             "Output file content does not match the expected content"
         )
 
-        # Clean up the temporary output file.
-        # Path(tmp_output_path).unlink()
-
 if __name__ == "__main__":
     pytest.main()
