@@ -19,8 +19,9 @@ include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG38 } from '../subworkflows/nf-cor
 include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG37 } from '../subworkflows/nf-core/fastq_align_bwa'
 include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG38   } from '../modules/nf-core/bwamem2/index/main'
 include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG37   } from '../modules/nf-core/bwamem2/index/main'
-include { MOSDEPTH_MOSDEPTH_TARGET as MOSDEPTH_MOSDEPTH_TARGET_HG38 } from '../subworkflows/local/mosdepth_mosdepth_target'
-include { MOSDEPTH_MOSDEPTH_TARGET as MOSDEPTH_MOSDEPTH_TARGET_HG37 } from '../subworkflows/local/mosdepth_mosdepth_target'
+include { MOSDEPTH as MOSDEPTH_HG38 } from '../modules/nf-core/mosdepth'
+include { MOSDEPTH as MOSDEPTH_HG37 } from '../modules/nf-core/mosdepth'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN MAIN WORKFLOW
@@ -168,82 +169,96 @@ workflow GRZQC {
                     .join(FASTQ_ALIGN_BWA_HG37.out.bai, by:0))
 
     // prepare mosdepth inputs               
-    // Prepare bed files for conversion: extract bed from samplesheet and attach the correct mapping file.
-    ch_samplesheet.map { meta, fastqs, bed_file ->
+    // Prepare bed files 
+    // for WGS: defined bed files of ~400 genes
+    // for WES and panel: extract bed from samplesheet and 
+    //      do the conversion with the correct mapping file (if it is NCBI format, covert it to UCSC).
+    // for both cases different file required for hg38 and hg19 
+    
+    ch_samplesheet_target = ch_samplesheet.filter { meta, fastqs, bed_file ->
+        meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
+    }
+    ch_samplesheet_wgs = ch_samplesheet.filter { meta, fastqs, bed_file ->
+        meta.libraryType in ["wgs", "wgs_lr"]
+    }
+
+    // --- For target samples: prepare bed for conversion ---
+    ch_samplesheet_target.map { meta, fastqs, bed_file ->
         def bed = bed_file.first()
         def mapping = (meta.reference == "GRCh38" || meta.reference == "hg38") ? chrom_mapping_38.getVal():
                       ((meta.reference == "GRCh37" || meta.reference == "hg19") ? chrom_mapping_37.getVal(): null)
         return tuple(meta, bed, mapping)
-    }.set{ch_bed_for_conversion}
-    
-    //  WGS does not need conversion
-    ch_bed_for_conversion.branch{
-        def meta = it[0]
-        target: meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
-        wgs: meta.libraryType in ["wgs", "wgs_lr"]
-        other:false
-    }.set{ch_bed_for_conversion_library}
+    }.set{ch_bed_for_conversion_target}
 
-    // Run the conversion process: if the bed file has UCSC-style names, they will be converted.
+    // for WES and panel, run the conversion process: if the bed file has NCBI-style names, they will be converted.
     CONVERT_BED_CHROM(
-        ch_bed_for_conversion_library.target
+        ch_bed_for_conversion_target
     )
     ch_converted_bed = CONVERT_BED_CHROM.out.converted_bed
     ch_versions = ch_versions.mix(CONVERT_BED_CHROM.out.versions)
 
-    // mix the converted bed file of WES and panel with the original WGS
-    ch_mosdepth_bed = ch_converted_bed.mix(
-        ch_bed_for_conversion_library.wgs.map { meta, bed, _ -> tuple(meta, bed) }
-    )
-
-    // prepare mosdepth inputs with converted bed file
-    ch_mosdepth_input = ch_samplesheet
+    // Prepare mosdepth inputs for target samples
+    ch_mosdepth_input_target = ch_samplesheet_target
         .map { meta, fastqs, bed_file -> tuple(meta, bed_file.first()) }
         .join(ch_bams, by: 0)
-        .join(ch_mosdepth_bed, by: 0)
+        .join(ch_converted_bed, by: 0)
         .map { joined ->
             def meta = joined[0]
-            def originalBed = joined[1]   // oringal bed, ignore
+            // original bed is ignored; we use the converted version
             def bam = joined[2]
             def bai = joined[3]
             def converted_bed = joined[4]
             return tuple(meta, bam, bai, converted_bed)
         }
+
+    // --- Prepare mosdepth inputs for WGS samples ---
+    ch_mosdepth_input_wgs = ch_samplesheet_wgs
+        .map { meta, fastqs, bed_file -> tuple(meta, bed_file.first()) }
+        .join(ch_bams, by: 0)
+        .map { joined ->
+            def meta = joined[0]
+            def bam = joined[2]
+            def bai = joined[3]
+            // For WGS, we use rep_genes of ~400 genes:
+            def rep_genes = (meta.reference == "GRCh38" || meta.reference == "hg38") ? rep_genes_38.getVal() :
+                            ((meta.reference == "GRCh37" || meta.reference == "hg19") ? rep_genes_37.getVal() : null)
+            return tuple(meta, bam, bai, rep_genes)
+        }
+
+    // --- Merge the two sets of mosdepth inputs ---
+    ch_mosdepth_input_target
+        .mix(ch_mosdepth_input_wgs)
         .branch {
             def meta = it[0]
             hg38: meta.reference == "GRCh38" || meta.reference == "hg38"
             hg37: meta.reference == "GRCh37" || meta.reference == "hg19"
             other: false
-        }
-    
+        }.set{ch_mosdepth_input}
+
     // hg38 mosdepth analysis
-    MOSDEPTH_MOSDEPTH_TARGET_HG38(
+    MOSDEPTH_HG38(
         ch_mosdepth_input.hg38,
         fasta_38,
-        rep_genes_38
     )
-    ch_versions = ch_versions.mix(MOSDEPTH_MOSDEPTH_TARGET_HG38.out.ch_versions.first())
-    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_MOSDEPTH_TARGET_HG38.out.ch_multiqc_files)
-
+    ch_versions = ch_versions.mix(MOSDEPTH_HG38.out.versions.first())
+    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_HG38.out.summary_txt.map{meta, file -> file}.collect())
 
     // hg37 mosdepth analysis
-    MOSDEPTH_MOSDEPTH_TARGET_HG37(
+    MOSDEPTH_HG37(
         ch_mosdepth_input.hg37,
         fasta_37,
-        rep_genes_37
     )
-    ch_versions = ch_versions.mix(MOSDEPTH_MOSDEPTH_TARGET_HG37.out.ch_versions.first())
-    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_MOSDEPTH_TARGET_HG37.out.ch_multiqc_files)
-
+    ch_versions = ch_versions.mix(MOSDEPTH_HG37.out.versions.first())
+    ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH_HG37.out.summary_txt.map{meta, file -> file}.collect())
 
     // collect the results for comparison
 
-    MOSDEPTH_MOSDEPTH_TARGET_HG37.out.summary_txt.mix(
-        MOSDEPTH_MOSDEPTH_TARGET_HG38.out.summary_txt
+    MOSDEPTH_HG37.out.summary_txt.mix(
+        MOSDEPTH_HG38.out.summary_txt
     ).set{ch_mosdepth_summary}
 
-    MOSDEPTH_MOSDEPTH_TARGET_HG37.out.regions_bed.mix(
-        MOSDEPTH_MOSDEPTH_TARGET_HG38.out.regions_bed
+    MOSDEPTH_HG37.out.regions_bed.mix(
+        MOSDEPTH_HG38.out.regions_bed
     ).set{ch_mosdepth_target_regions}
 
     ch_mosdepth_summary.join(ch_mosdepth_target_regions, by:0)

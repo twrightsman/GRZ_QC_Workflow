@@ -116,7 +116,7 @@ def main():
     bed_df["chrom"] = bed_df["chrom"].replace(mapping)
 
     # Write the (possibly converted) BED file.
-    bed_df.to_csv(out_path, sep="\t", index=False, header=False)
+    bed_df[["chrom", "start", "end"]].to_csv(out_path, sep="\t", index=False, header=False)
     return 0
 
 if __name__ == "__main__":
