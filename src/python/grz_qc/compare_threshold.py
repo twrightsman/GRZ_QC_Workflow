@@ -152,7 +152,7 @@ def main(args=None):
 
     # Read mosdepth summary file
     df = pd.read_csv(args.mosdepth_global_summary, sep="\t")
-    row_name = "total_region" if args.libraryType in ["panel", "wes"] else "total"
+    row_name = "total_region" if args.libraryType in ["panel", "wes","panel_lr", "wes_lr"] else "total"
     mean_depth_of_coverage = df.loc[df["chrom"] == row_name, "mean"].item()
 
     # --- Determine 'fractionBasesAboveQualityThreshold' ---
