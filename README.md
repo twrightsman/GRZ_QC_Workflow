@@ -15,6 +15,18 @@
 3. Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
 4. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
+## Estimated resource requirements
+
+Using the 466 GB `WGS_tumor+germline` test submission dataset from the
+[example GRZ submissions](https://www.cmm.in.tum.de/public/grz-example-submissions),
+the pipeline used the following resources:
+
+- 828 CPU hours
+- 72 GB maximum RAM (genome indexing)
+- 2 TB storage (including the input files)
+
+The biggest jobs were the two bwa-mem2 alignments which used 300 CPU hours each
+and a maximum of 48 GB of RAM.
 
 ## Setup
 
