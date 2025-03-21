@@ -148,6 +148,20 @@ nextflow plugin install nf-schema@2.1.1
 
 For more detailed information please check ["Running offline by nf-core"](https://nf-co.re/docs/usage/getting_started/offline)
 
+
+## Estimated resource requirements
+
+Using the 466 GB `WGS_tumor+germline` test submission dataset from the
+[example GRZ submissions](https://www.cmm.in.tum.de/public/grz-example-submissions),
+the pipeline used the following resources:
+
+- 828 CPU hours
+- 72 GB maximum RAM (genome indexing)
+- 2 TB storage (including the input files)
+
+The biggest jobs were the two bwa-mem2 alignments which used 300 CPU hours each
+and a maximum of 48 GB of RAM.
+
 ## Contributions and Support
 
 **BfArM-MVH/GRZ_QC_Workflow** was originally written by Shounak Chakraborty, Yun Wang, Kübra Narci and Florian R. Hölzlwimmer.
