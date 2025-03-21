@@ -2,10 +2,7 @@
 
 ## Introduction
 
-This document describes some key steps as well as the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
-
-The directories listed below will be created in the results directory after the pipeline has finished. All paths are relative to the top-level results directory.
-
+This document describes some key steps as well as the output produced by the pipeline. 
 
 ## Pipeline overview
 
@@ -30,7 +27,7 @@ The pipeline uses branching logic to provide the correct BED file depending on t
 The pipeline automatically selects the default BED file containing ~400 genes for the mosdepth run. Mosdepth calculates depths for both genome-wide and targeted regions in one run.
 
 - For WES/Panel samples:
-The pipeline uses the target region BED file supplied in the submission metadata and converts into UCSC-style if the chromosome names are in NCBI-style.
+The pipeline uses the target region BED file supplied in the submission metadata and converts it into UCSC-style if the chromosome names are in NCBI-style.
 
 | **Library Type** | **input: BED File**                   | **Mean Coverage Calculation (`meanDepthOfCoverage`)**           | **per-base Coverage of Targeted Regions (to furthur calculate `fractionBasesAboveQualityThresholdRequired`)**                  |
 |------------------|------------------------------------|-----------------------------------------|----------------------------------------|
