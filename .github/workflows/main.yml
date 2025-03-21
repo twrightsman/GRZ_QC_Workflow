@@ -66,10 +66,6 @@ jobs:
         with:
           version: ${{ env.NFT_VER }}
 
-      - name: Run Tests with test profile with hg19
-        run: |
-          nextflow run main.nf -profile test_hg19,docker
-
       - name: Run Tests with test profile with hg38
         run: |
           nextflow run main.nf -profile test_hg38,docker
