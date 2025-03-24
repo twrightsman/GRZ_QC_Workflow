@@ -123,6 +123,8 @@ Output :
 | `targetedRegionsAboveMinCoverageRequired`    | Fraction of targeted regions above minimum coverage required to pass QC |
 | `passedQC`                                   | `true` when QC passed, otherwise `false`                                |
 
+For more details about the output files and reports, please refer to the [output documentation](docs/output.md).
+
 ## Running the pipeline offline
 
 Nextflow can automatically retrieve almost everything necessary to execute a pipeline from the web, including pipeline code, software dependencies, reference genomes, and remote data sources.
