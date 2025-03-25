@@ -12,8 +12,9 @@
 
 1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and [`FASTP`](https://github.com/OpenGene/fastp))
 2. Alignment using ([`BWAMEM2`](https://github.com/bwa-mem2/bwa-mem2))
-3. Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
-4. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+3. MarkDuplicates using ([`Picard`](https://gatk.broadinstitute.org/hc/en-us/articles/360037052812-MarkDuplicates-Picard))
+4. Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
+5. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
 ## Setup
 
@@ -25,6 +26,29 @@
 git clone https://github.com/BfArM-MVH/GRZ_QC_Workflow.git
 $output_path = "path/to/analysis/dir"
 ```
+
+## Usage
+
+This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script `run_grzqc.sh` parses the metadata.json file to create a nextflow samplesheet:
+
+```bash
+python3 bin/metadata_to_samplesheet.py \
+    "${submission_basepath}" \
+    "${output_basepath}/grzqc_output/grzqc_samplesheet.csv"
+```
+
+Now, you can run the pipeline using:
+
+```bash
+nextflow run main.nf \
+    -profile conda \
+    --outdir "${output_basepath}/grzqc_output/" \
+    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    --genome "hg19" # or"hg38"
+    --fasta = "https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz" #or, "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+```
+
+For your next run, you can use prebuild references. Please prepare your own config file to do so. e.g update the file paths in `conf/grzqc.conf` and run nextflow with `-profile grzqc,conda`
 
 ### Setting up reference files
 
@@ -78,29 +102,6 @@ params {
 ```
 
 by replacing `$shared_directory` with the absolute path to the shared directory.
-
-## Usage
-
-This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script `run_grzqc.sh` parses the metadata.json file to create a nextflow samplesheet:
-
-```bash
-python3 bin/metadata_to_samplesheet.py \
-    "${submission_basepath}" \
-    "${output_basepath}/grzqc_output/grzqc_samplesheet.csv"
-```
-
-Now, you can run the pipeline using:
-
-```bash
-nextflow run main.nf \
-    -profile docker \
-    --outdir "${output_basepath}/grzqc_output/" \
-    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
-    --genome "hg38"
-
-```
-
-For your next run, you can use prebuild references. Please prepare your own config file to do so.
 
 ## Pipeline output
 
