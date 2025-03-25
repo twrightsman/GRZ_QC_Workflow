@@ -11,26 +11,14 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_grzq
 include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq'
 include { FASTQC                 } from '../modules/nf-core/fastqc'
 include { FASTP                  } from '../modules/nf-core/fastp'
-include { MULTIQC                } from '../modules/nf-core/multiqc'
-// include { PREPARE_GENOME as PREPARE_GENOME37 } from '../subworkflows/local/prepare_genome'
-// include { PREPARE_GENOME as PREPARE_GENOME38 } from '../subworkflows/local/prepare_genome'
-
-include { PICARD_ADDORREPLACEREADGROUPS as PICARD_ADDORREPLACEREADGROUPS_37 } from '../modules/nf-core/picard/addorreplacereadgroups/main'      
-include { PICARD_ADDORREPLACEREADGROUPS as PICARD_ADDORREPLACEREADGROUPS_38 } from '../modules/nf-core/picard/addorreplacereadgroups/main'                                                                                                               
-include { GATK4_CREATESEQUENCEDICTIONARY as GATK4_CREATESEQUENCEDICTIONARY_37 } from '../modules/nf-core/gatk4/createsequencedictionary/main' 
-include { GATK4_CREATESEQUENCEDICTIONARY as GATK4_CREATESEQUENCEDICTIONARY_38 } from '../modules/nf-core/gatk4/createsequencedictionary/main'                                                                                                             
-include { SAMTOOLS_FAIDX as SAMTOOLS_FAIDX_37        } from '../modules/nf-core/samtools/faidx/main'    
-include { SAMTOOLS_FAIDX as SAMTOOLS_FAIDX_38         } from '../modules/nf-core/samtools/faidx/main'    
-include { GATK4SPARK_MARKDUPLICATES as GATK4SPARK_MARKDUPLICATES_37   } from '../modules/nf-core/gatk4spark/markduplicates/main' 
-include { GATK4SPARK_MARKDUPLICATES as GATK4SPARK_MARKDUPLICATES_38   } from '../modules/nf-core/gatk4spark/markduplicates/main'                                                                                                                                   
-include { PICARD_MARKDUPLICATES as PICARD_MARKDUPLICATES_37 } from '../modules/nf-core/picard/markduplicates/main'
-include { PICARD_MARKDUPLICATES as PICARD_MARKDUPLICATES_38 } from '../modules/nf-core/picard/markduplicates/main'
-
+include { MULTIQC                } from '../modules/nf-core/multiqc' 
 include { CONVERT_BED_CHROM      } from '../modules/local/convert_bed_chrom'
 include { COMPARE_THRESHOLD      } from '../modules/local/compare_threshold'
 include { MERGE_REPORTS          } from '../modules/local/merge_reports'
-include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG38 } from '../subworkflows/nf-core/fastq_align_bwa'
-include { FASTQ_ALIGN_BWA as FASTQ_ALIGN_BWA_HG37 } from '../subworkflows/nf-core/fastq_align_bwa'
+include { SAMTOOLS_FAIDX as SAMTOOLS_FAIDX_37        } from '../modules/nf-core/samtools/faidx/main'    
+include { SAMTOOLS_FAIDX as SAMTOOLS_FAIDX_38         } from '../modules/nf-core/samtools/faidx/main'   
+include { FASTQ_ALIGN_BWA_MARKDUPLICATES as FASTQ_ALIGN_BWA_MARKDUPLICATES_HG38 } from '../subworkflows/local/fastq_align_bwa_markduplicates'
+include { FASTQ_ALIGN_BWA_MARKDUPLICATES as FASTQ_ALIGN_BWA_MARKDUPLICATES_HG37 } from '../subworkflows/local/fastq_align_bwa_markduplicates'
 include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG38   } from '../modules/nf-core/bwamem2/index/main'
 include { BWAMEM2_INDEX  as  BWAMEM2_INDEX_HG37   } from '../modules/nf-core/bwamem2/index/main'
 include { MOSDEPTH as MOSDEPTH_HG38 } from '../modules/nf-core/mosdepth'
@@ -152,14 +140,20 @@ workflow GRZQC {
         bwa_index_38 = BWAMEM2_INDEX_HG38.out.index
     }
 
+    // Create sequence fai files
+    SAMTOOLS_FAIDX_38(fasta_38,[[],[]],false)
+    fasta_38_fai = SAMTOOLS_FAIDX_38.out.fai 
+    ch_versions = ch_versions.mix(SAMTOOLS_FAIDX_38.out.versions.first())
+
     // hg38 alignment analysis
-    FASTQ_ALIGN_BWA_HG38 (
+    FASTQ_ALIGN_BWA_MARKDUPLICATES_HG38 (
         input_samples.hg38,
         bwa_index_38,
         true,
-        fasta_38
+        fasta_38,
+        fasta_38_fai
     )
-    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA_HG38.out.versions.first())
+    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG38.out.versions.first())
 
     // bwa index creation might be dropped
     if (!params.bwa_index_37){
@@ -167,58 +161,29 @@ workflow GRZQC {
         ch_versions = ch_versions.mix(BWAMEM2_INDEX_HG38.out.versions.first())
         bwa_index_37 = BWAMEM2_INDEX_HG37.out.index
     }
+
+    // Create sequence fai files
+    SAMTOOLS_FAIDX_37(fasta_37,[[],[]],false)
+    fasta_37_fai = SAMTOOLS_FAIDX_37.out.fai
+    ch_versions = ch_versions.mix(SAMTOOLS_FAIDX_37.out.versions.first())
+
     // hg37 alignment analysis
-    FASTQ_ALIGN_BWA_HG37 (
+    FASTQ_ALIGN_BWA_MARKDUPLICATES_HG37 (
         input_samples.hg37,
         bwa_index_37,
         true,
-        fasta_37
+        fasta_37,
+        fasta_37_fai
     )
-    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA_HG37.out.versions.first())
+    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG37.out.versions.first())
 
-
-    //
-    // MODULE: MARKDUPLICATES_SPARK
-    //
-
-    // Create sequence dictionary and fai files
-    GATK4_CREATESEQUENCEDICTIONARY_37(fasta_37)
-    GATK4_CREATESEQUENCEDICTIONARY_38(fasta_38)
-    fasta_37_dict = GATK4_CREATESEQUENCEDICTIONARY_37.out.dict
-    fasta_38_dict = GATK4_CREATESEQUENCEDICTIONARY_38.out.dict
-
-    SAMTOOLS_FAIDX_37(fasta_37,[[],[]],false)
-    SAMTOOLS_FAIDX_38(fasta_38,[[],[]],false)
-    fasta_37_fai = SAMTOOLS_FAIDX_37.out.fai
-    fasta_38_fai = SAMTOOLS_FAIDX_38.out.fai   
-
-    // Add read groups required by GATK4SPARK_MARKDUPLICATES
-    PICARD_ADDORREPLACEREADGROUPS_37 (FASTQ_ALIGN_BWA_HG37.out.bam, [[:],[]], [[:],[]])
-    PICARD_ADDORREPLACEREADGROUPS_38 (FASTQ_ALIGN_BWA_HG38.out.bam, [[:],[]], [[:],[]])
-
-    // prepare GATK4SPARK_MARKDUPLICATES inputs
-    // Extract the raw FASTA, dictionary, and FAIDX outputs into dedicated channels
-    fasta_37.map { meta, fa -> fa }.set{fasta_37_fa}
-    fasta_38.map { meta, fa -> fa }.set{fasta_38_fa}
-    fasta_37_dict.map { meta, dict -> dict }.set{fasta_37_dict_dict}
-    fasta_38_dict.map { meta, dict -> dict }.set{fasta_38_dict_dict}
-    fasta_37_fai.map { meta, fai -> fai }.set{fasta_37_fai_fai}
-    fasta_38_fai.map { meta, fai -> fai }.set{fasta_38_fai_fai}
-
-    PICARD_MARKDUPLICATES_37(PICARD_ADDORREPLACEREADGROUPS_37.out.bam, fasta_37,fasta_37_fai)
-    PICARD_MARKDUPLICATES_38(PICARD_ADDORREPLACEREADGROUPS_38.out.bam, fasta_38,fasta_38_fai)
-
-    // GATK4SPARK Mark duplicates
-    // GATK4SPARK_MARKDUPLICATES_37 ( PICARD_ADDORREPLACEREADGROUPS_37.out.bam, fasta_37_fa,fasta_37_fai_fai, fasta_37_dict_dict )
-    // GATK4SPARK_MARKDUPLICATES(bam, fasta.map{ meta, fasta -> [ fasta ] }, fasta_fai.map{ meta, fasta_fai -> [ fasta_fai ] }, dict.map{ meta, dict -> [ dict ] })
     ch_bams = ch_bams
-                .mix(PICARD_MARKDUPLICATES_37.out.bam
-                    .join(PICARD_MARKDUPLICATES_37.out.bai, by:0))
+                .mix(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG37.out.bam
+                    .join(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG37.out.bai, by:0))
 
-    // GATK4SPARK_MARKDUPLICATES_38 ( PICARD_ADDORREPLACEREADGROUPS_38.out.bam, fasta_38_fa,fasta_38_fai_fai, fasta_38_dict_dict )
     ch_bams = ch_bams
-                .mix(PICARD_MARKDUPLICATES_38.out.bam
-                    .join(PICARD_MARKDUPLICATES_38.out.bai, by:0))
+                .mix(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG38.out.bam
+                    .join(FASTQ_ALIGN_BWA_MARKDUPLICATES_HG38.out.bai, by:0))
 
     // prepare mosdepth inputs               
     // Prepare bed files 
