@@ -44,11 +44,10 @@ nextflow run main.nf \
     -profile conda \
     --outdir "${output_basepath}/grzqc_output/" \
     --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
-    --genome "hg19" # or"hg38"
-    --fasta = "https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz" #or, "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+    --genome "GRCh37" # or"GRCh38"
 ```
 
-For your next run, you can use prebuild references. Please prepare your own config file to do so. e.g update the file paths in `conf/grzqc.conf` and run nextflow with `-profile grzqc,conda`
+For your next run, you can use prebuild references with instuctions below. 
 
 ### Setting up reference files
 
@@ -68,7 +67,7 @@ mv hg38.fa.gz $shared_directory/references
 
 or from (igenomes)[https://ewels.github.io/AWS-iGenomes/]: Homo sapiens : UCSC : hg38/hg19 : FASTA
 
-Then you can update the file paths in `conf/grzqc.conf`:
+Then you can update the file paths in `conf/grzqc_GRCh37.conf` or `conf/grzqc_GRCh38.conf`:
 
 ```bash
 params {
@@ -89,7 +88,7 @@ cp -r "${output_basepath}/grzqc_output/references/" "$shared_directory/reference
 
 or from (igenomes)[https://ewels.github.io/AWS-iGenomes/]: Homo sapiens : UCSC : hg38/hg19 : BWA
 
-and configure it in `conf/grzqc.conf`:
+and configure it in `conf/grzqc_GRCh37.conf` or `conf/grzqc_GRCh38.conf`:
 
 ```bash
 params {
@@ -102,6 +101,8 @@ params {
 ```
 
 by replacing `$shared_directory` with the absolute path to the shared directory.
+
+You can run your own config with `-profile grzqc_GRCh37,conda` or `-profile grzqc_GRCh38,conda`
 
 ## Pipeline output
 

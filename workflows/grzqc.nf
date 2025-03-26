@@ -36,10 +36,14 @@ workflow GRZQC {
     ch_multiqc_files = Channel.empty()
 
     // create reference channels
-
-    fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
-                            : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/${params.genome}/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
-
+    if(params.genome == "GRCh38"){
+        fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+                                : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    }else{
+        fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+                            : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    }
+    
     bwa      = params.bwa   ? Channel.fromPath(params.bwa ).map{ it -> [ [id:'bwa'], it ] }.collect()
                             : Channel.empty()
 
@@ -47,7 +51,7 @@ workflow GRZQC {
                                     : Channel.fromPath("${projectDir}/assets/default_files/thresholds.json").collect()
 
     if (!params.target){
-        if(params.genome == "hg38"){
+        if(params.genome == "GRCh38"){
             target  = Channel.fromPath("${projectDir}/assets/default_files/hg38_440_omim_genes.bed", checkIfExists: true).collect()
 
         }else{
@@ -57,9 +61,12 @@ workflow GRZQC {
         target  = Channel.fromPath(params.target, checkIfExists: true).collect()
     }
 
+    if(params.genome == "GRCh38"){
+        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg38_NCBI2UCSC.txt").collect()
 
-    mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/${params.genome}_NCBI2UCSC.txt").collect()
-
+    }else{
+        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg19_NCBI2UCSC.txt").collect()
+    }
 
     // Creating merge fastq channel from samplesheet
     ch_samplesheet.map{

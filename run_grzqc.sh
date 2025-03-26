@@ -29,7 +29,8 @@ cmp --silent "$tmp_samplesheet_path" "${output_basepath}/grzqc_output/grzqc_samp
 
 # run nextflow
 nextflow run main.nf \
-    -profile grzqc,conda \
+    --genome "GRCh37" \
+    -profile grzqc_37,conda \
     --outdir "${output_basepath}/grzqc_output/" \
     -work-dir "${output_basepath}/work/" \
     --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
