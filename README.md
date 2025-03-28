@@ -16,6 +16,8 @@
 4. Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
 5. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 
+For more details, please refer to the [pipeline overview and output documentation](docs/output.md).
+
 ## Setup
 
 - Install nextflow (and dependencies)
