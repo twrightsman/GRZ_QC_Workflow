@@ -24,7 +24,8 @@
 
 ```bash
 git clone https://github.com/BfArM-MVH/GRZ_QC_Workflow.git
-$output_path = "path/to/analysis/dir"
+output_path="path/to/analysis/dir"
+mkdir -p ${output_path}/grzqc_output
 ```
 
 ## Usage
@@ -67,13 +68,20 @@ mv hg38.fa.gz $shared_directory/references
 
 or from (igenomes)[https://ewels.github.io/AWS-iGenomes/]: Homo sapiens : UCSC : hg38/hg19 : FASTA
 
-Then you can update the file paths in `conf/grzqc_GRCh37.conf` or `conf/grzqc_GRCh38.conf`:
+Then you can update the file paths in `conf/grzqc_GRCh37.conf` 
 
 ```bash
 params {
     [...]
     fasta = "$shared_directory/references/hg19.fa.gz"
-    or
+}
+```
+
+or `conf/grzqc_GRCh38.conf`:
+
+```bash
+params {
+    [...]
     fasta = "$shared_directory/references/hg38.fa.gz"
 }
 ```
@@ -102,7 +110,7 @@ params {
 
 by replacing `$shared_directory` with the absolute path to the shared directory.
 
-You can run your own config with `-profile grzqc_GRCh37,conda` or `-profile grzqc_GRCh38,conda`
+You can run now your own config with `-profile grzqc_GRCh37,conda` or `-profile grzqc_GRCh38,conda`
 
 ## Pipeline output
 
