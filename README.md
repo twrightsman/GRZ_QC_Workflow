@@ -135,6 +135,10 @@ Output :
 
 For more details about the output files and reports, please refer to the [output documentation](docs/output.md).
 
+## Thresholds
+
+QC thresholds are read from [`thresholds.json`](https://github.com/BfArM-MVH/GRZ_QC_Workflow/blob/main/assets/default_files/thresholds.json), which uses the values [defined by BfArM](https://www.bfarm.de/SharedDocs/Downloads/DE/Forschung/modellvorhaben-genomsequenzierung/Qs-durch-GRZ.pdf?__blob=publicationFile).
+
 ## Running the pipeline offline
 
 Nextflow can automatically retrieve almost everything necessary to execute a pipeline from the web, including pipeline code, software dependencies, reference genomes, and remote data sources.
