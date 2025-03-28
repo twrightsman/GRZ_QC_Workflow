@@ -10,6 +10,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io/) and processes d
 
 - Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/) and [`FASTP`](https://github.com/OpenGene/fastp))
 - Alignment using ([`BWAMEM2`](https://github.com/bwa-mem2/bwa-mem2))
+- MarkDuplicates using ([`Picard`](https://gatk.broadinstitute.org/hc/en-us/articles/360037052812-MarkDuplicates-Picard))
 - Coverage calculation by ([`Mosdepth`](https://github.com/brentp/mosdepth))
 - Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
 - Report metrics generated during the workflow execution [`Pipeline information`](#pipeline-information) 

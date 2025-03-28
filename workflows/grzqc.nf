@@ -11,13 +11,14 @@ include { methodsDescriptionText } from '../subworkflows/local/utils_nfcore_grzq
 include { CAT_FASTQ              } from '../modules/nf-core/cat/fastq'
 include { FASTQC                 } from '../modules/nf-core/fastqc'
 include { FASTP                  } from '../modules/nf-core/fastp'
-include { MULTIQC                } from '../modules/nf-core/multiqc'
+include { MULTIQC                } from '../modules/nf-core/multiqc' 
 include { CONVERT_BED_CHROM      } from '../modules/local/convert_bed_chrom'
 include { COMPARE_THRESHOLD      } from '../modules/local/compare_threshold'
 include { MERGE_REPORTS          } from '../modules/local/merge_reports'
-include { FASTQ_ALIGN_BWA        } from '../subworkflows/nf-core/fastq_align_bwa'
 include { BWAMEM2_INDEX          } from '../modules/nf-core/bwamem2/index/main'
 include { MOSDEPTH               } from '../modules/nf-core/mosdepth'
+include { SAMTOOLS_FAIDX         } from '../modules/nf-core/samtools/faidx/main'    
+include { FASTQ_ALIGN_BWA_MARKDUPLICATES  } from '../subworkflows/local/fastq_align_bwa_markduplicates'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,10 +36,14 @@ workflow GRZQC {
     ch_multiqc_files = Channel.empty()
 
     // create reference channels
-
-    fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
-                            : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/${params.genome}/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
-
+    if(params.genome == "GRCh38"){
+        fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+                                : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    }else{
+        fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+                            : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
+    }
+    
     bwa      = params.bwa   ? Channel.fromPath(params.bwa ).map{ it -> [ [id:'bwa'], it ] }.collect()
                             : Channel.empty()
 
@@ -46,7 +51,7 @@ workflow GRZQC {
                                     : Channel.fromPath("${projectDir}/assets/default_files/thresholds.json").collect()
 
     if (!params.target){
-        if(params.genome == "hg38"){
+        if(params.genome == "GRCh38"){
             target  = Channel.fromPath("${projectDir}/assets/default_files/hg38_440_omim_genes.bed", checkIfExists: true).collect()
 
         }else{
@@ -56,9 +61,12 @@ workflow GRZQC {
         target  = Channel.fromPath(params.target, checkIfExists: true).collect()
     }
 
+    if(params.genome == "GRCh38"){
+        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg38_NCBI2UCSC.txt").collect()
 
-    mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/${params.genome}_NCBI2UCSC.txt").collect()
-
+    }else{
+        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg19_NCBI2UCSC.txt").collect()
+    }
 
     // Creating merge fastq channel from samplesheet
     ch_samplesheet.map{
@@ -112,28 +120,35 @@ workflow GRZQC {
     ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.html.collect{ meta, html -> html })
     ch_versions = ch_versions.mix(FASTP.out.versions.first())
 
-
     ch_bams = Channel.empty()
 
     // bwa index creation might be dropped
-
     if (!params.bwa){
         BWAMEM2_INDEX(fasta)
         ch_versions = ch_versions.mix(BWAMEM2_INDEX.out.versions.first())
         bwa = BWAMEM2_INDEX.out.index
     }
 
-    // hg38 alignment analysis
-    FASTQ_ALIGN_BWA (
+    //
+    // MODULE: FASTQ_ALIGN_BWA_MARKDUPLICATES
+    //
+
+    // Create sequence fai files for picard markduplicates
+    SAMTOOLS_FAIDX(fasta,[[],[]],false)
+    fasta_fai = SAMTOOLS_FAIDX.out.fai 
+    ch_versions = ch_versions.mix(SAMTOOLS_FAIDX.out.versions.first())
+
+    // alignment analysis and markduplicates
+    FASTQ_ALIGN_BWA_MARKDUPLICATES (
         ch_cat_fastq,
         bwa,
         true,
-        fasta
+        fasta,
+        fasta_fai
     )
-    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA.out.versions.first())
+    ch_versions = ch_versions.mix(FASTQ_ALIGN_BWA_MARKDUPLICATES.out.versions.first())
 
-    ch_bams =  FASTQ_ALIGN_BWA.out.bam.join(FASTQ_ALIGN_BWA.out.bai, by:0)
-
+    ch_bams =  FASTQ_ALIGN_BWA_MARKDUPLICATES.out.bam.join(FASTQ_ALIGN_BWA_MARKDUPLICATES.out.bai, by:0)
 
     // prepare mosdepth inputs
     // Prepare bed files
@@ -156,7 +171,7 @@ workflow GRZQC {
     }.set{ch_bed_for_conversion_target}
 
     // for WES and panel, run the conversion process: if the bed file has NCBI-style names, they will be converted.
-    CONVERT_BED_CHROM(
+    CONVERT_BED_CHROM (
         ch_bed_for_conversion_target,
         mapping_chrom
     )

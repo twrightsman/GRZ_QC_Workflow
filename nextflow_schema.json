@@ -15,10 +15,10 @@
                 "genome": {
                     "type": "string",
                     "description": "Name of genome reference.",
-                    "default": "hg38",
+                    "default": "GRCh38",
                     "fa_icon": "fas fa-book",
-                    "help_text": "hg38 or hg19: User have to define genome",
-                    "enum": ["hg38", "hg19"]
+                    "help_text": "GRCh38 or GRCh37: User have to define genome",
+                    "enum": ["GRCh38", "GRCh37"]
                 },
                 "input": {
                     "type": "string",
