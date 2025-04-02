@@ -10,8 +10,17 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "outdir", "genome"],
+            "required": [ "submission_basepath" ,"outdir", "genome"],
             "properties": {
+                "submission_basepath": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "exists": true,
+                    "schema": "assets/schema_input.json",
+                    "description": "submission basepath",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "contains subfolder of files and metadata, e.g https://www.cmm.in.tum.de/public/grz-example-submissions/Panel/ "
+                },
                 "genome": {
                     "type": "string",
                     "description": "Name of genome reference.",

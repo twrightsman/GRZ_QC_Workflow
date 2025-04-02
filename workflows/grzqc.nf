@@ -29,14 +29,16 @@ include { FASTQ_ALIGN_BWA_MARKDUPLICATES  } from '../subworkflows/local/fastq_al
 workflow GRZQC {
 
     take:
-    ch_samplesheet // channel: samplesheet read in from --input
+    ch_samplesheet // channel: samplesheet created by parsing metadata.json file
+    genome        // string:  Genome version to use (GRCh38 or GRCh37)
+
     main:
 
     ch_versions = Channel.empty()
     ch_multiqc_files = Channel.empty()
 
     // create reference channels
-    if(params.genome == "GRCh38"){
+    if(genome == "GRCh38"){
         fasta    = params.fasta ? Channel.fromPath(params.fasta, checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
                                 : Channel.fromPath("s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/genome.fa", checkIfExists: true).map{ file -> tuple([id: file.getSimpleName()], file) }.collect()
     }else{
@@ -51,7 +53,7 @@ workflow GRZQC {
                                     : Channel.fromPath("${projectDir}/assets/default_files/thresholds.json").collect()
 
     if (!params.target){
-        if(params.genome == "GRCh38"){
+        if(genome == "GRCh38"){
             target  = Channel.fromPath("${projectDir}/assets/default_files/hg38_440_omim_genes.bed", checkIfExists: true).collect()
 
         }else{
@@ -61,7 +63,7 @@ workflow GRZQC {
         target  = Channel.fromPath(params.target, checkIfExists: true).collect()
     }
 
-    if(params.genome == "GRCh38"){
+    if(genome == "GRCh38"){
         mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg38_NCBI2UCSC.txt").collect()
 
     }else{
