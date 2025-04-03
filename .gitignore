@@ -15,3 +15,4 @@ grzqc_output/
 .nf-test.log
 tests/output/*
 reference*
+tests/results*
