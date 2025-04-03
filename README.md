@@ -36,6 +36,33 @@ output_path="path/to/analysis/dir"
 mkdir -p ${output_path}/grzqc_output
 ```
 
+This pipeline will automatically download the necessary _reference genomes_ and creates an _BWA index_ from them.
+However, when running this pipeline multiple times on different submissions, the download and indexing steps create _unnecessary overhead_.
+
+Therefore, it is recommended to run test_GRCh37 and test_GRCh38 profiles to set-up reference files and to be sure if all the necessary images and containers are settles-up correctly. Thus, depending on the reference genome you will use, run the profile:
+
+```bash
+nextflow run main.nf \
+    -profile test_GRCh37,docker
+```
+
+or/and
+
+```bash
+nextflow run main.nf \
+    -profile test_GRCh38,docker
+```
+
+\*\*Please use replace docker with singularity or conda depending on your system. This pipeline is able to run all profiles.
+
+Now, all the necessary files are saved into _project_/_path_/references
+
+and you can delete test results safely:
+
+```bash
+rm -rf ${projectDir}/tests/results
+```
+
 ## Usage
 
 This pipeline needs a samplesheet which is generated automatically from the metadata.json file included in the submission base directory. Please make sure that the submission base directory has the required folder structure. The script `run_grzqc.sh` parses the metadata.json file to create a nextflow samplesheet:
@@ -50,75 +77,21 @@ Now, you can run the pipeline using:
 
 ```bash
 nextflow run main.nf \
-    -profile conda \
+    -profile docker \
     --outdir "${output_basepath}/grzqc_output/" \
     --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
-    --genome "GRCh37" # or"GRCh38"
+    -c conf/grzqc_GRCh37.config
 ```
 
-For your next run, you can use prebuild references with instuctions below. 
-
-### Setting up reference files
-
-This pipeline will automatically download the necessary reference genomes and creates an BWA index from them.
-However, when running this pipeline multiple times on different submissions, the download and indexing steps create unnecessary overhead.
-
-To skip downloading the reference genomes, you can also download the necessary reference genome FASTA files to some shared location:
-
-You can download files here
+or
 
 ```bash
-wget https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.fa.gz
-mv hg19.fa.gz $shared_directory/references
-wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
-mv hg38.fa.gz $shared_directory/references
+nextflow run main.nf \
+    -profile docker \
+    --outdir "${output_basepath}/grzqc_output/" \
+    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    -c conf/grzqc_GRCh38.config
 ```
-
-or from (igenomes)[https://ewels.github.io/AWS-iGenomes/]: Homo sapiens : UCSC : hg38/hg19 : FASTA
-
-Then you can update the file paths in `conf/grzqc_GRCh37.conf` 
-
-```bash
-params {
-    [...]
-    fasta = "$shared_directory/references/hg19.fa.gz"
-}
-```
-
-or `conf/grzqc_GRCh38.conf`:
-
-```bash
-params {
-    [...]
-    fasta = "$shared_directory/references/hg38.fa.gz"
-}
-```
-
-by replacing `$shared_directory` with the absolute path to the shared directory.
-
-After the first run, you can also copy the BWAMEM2 index to the shared directory:
-
-```bash
-cp -r "${output_basepath}/grzqc_output/references/" "$shared_directory/references/"
-```
-
-or from (igenomes)[https://ewels.github.io/AWS-iGenomes/]: Homo sapiens : UCSC : hg38/hg19 : BWA
-
-and configure it in `conf/grzqc_GRCh37.conf` or `conf/grzqc_GRCh38.conf`:
-
-```bash
-params {
-    [...]
-    bwa = "$shared_directory/references/GRCh37/bwamem2"
-    or
-    bwa = "$shared_directory/references/GRCh38/bwamem2"
-
-}
-```
-
-by replacing `$shared_directory` with the absolute path to the shared directory.
-
-You can run now your own config with `-profile grzqc_GRCh37,conda` or `-profile grzqc_GRCh38,conda`
 
 ## Pipeline output
 
@@ -170,8 +143,12 @@ nextflow plugin install nf-schema@2.1.1
 
 ```
 
-For more detailed information please check ["Running offline by nf-core"](https://nf-co.re/docs/usage/getting_started/offline)
+The default reference files used in this pipeline is part of AWS iGenomes. Please follow the instructions [here](https://ewels.github.io/AWS-iGenomes/) to download:
 
+- s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg38/Sequence/WholeGenomeFasta/
+- s3://ngi-igenomes/igenomes/Homo_sapiens/UCSC/hg19/Sequence/WholeGenomeFasta/
+
+For more detailed information please check ["Running offline by nf-core"](https://nf-co.re/docs/usage/getting_started/offline)
 
 ## Estimated resource requirements
 
