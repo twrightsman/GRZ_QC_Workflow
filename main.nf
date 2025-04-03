@@ -69,8 +69,8 @@ workflow {
         params.submission_basepath
     )
 
-    METADATA_TO_SAMPLESHEET.out.samplesheet.view { "DEBUG: Samplesheet path is: ${it}" }
-    METADATA_TO_SAMPLESHEET.out.genome.view { "DEBUG: genome is: ${it}" }
+    // METADATA_TO_SAMPLESHEET.out.samplesheet.view { "DEBUG: meta.Samplesheet path is: ${it}" }
+    // METADATA_TO_SAMPLESHEET.out.genome.view { "DEBUG: genome is: ${it}" }
 
     //
     // SUBWORKFLOW: Run initialisation tasks
@@ -84,6 +84,7 @@ workflow {
         METADATA_TO_SAMPLESHEET.out.samplesheet
     )
 
+    // PIPELINE_INITIALISATION.out.samplesheet.view { "DEBUG: pipe.Samplesheet path is: ${it}" }
     //
     // WORKFLOW: Run main workflow
     //

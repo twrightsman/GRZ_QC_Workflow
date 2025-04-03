@@ -22,7 +22,7 @@ process METADATA_TO_SAMPLESHEET {
     // def prefix = task.ext.prefix ?: "${meta.id}"
     """
     metadata_to_samplesheet.py "${submission_basepath}" 
-    genome="GrCh37"
+    genome=\$(jq -r '.donors[0].labData[0].sequenceData.referenceGenome' "${submission_basepath}/metadata/metadata.json")
     """
 
 }
