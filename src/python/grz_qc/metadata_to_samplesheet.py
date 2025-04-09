@@ -58,7 +58,7 @@ def extract_data(
     donors = json_data["donors"]
 
     for donor in donors:
-        case_id = donor.get("tanG", "")
+        case_id = donor.get("donorPseudonym", "")
         lab_data = donor.get("labData", [])
 
         for lab_datum in lab_data:
