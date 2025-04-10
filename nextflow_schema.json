@@ -11,8 +11,12 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
             "anyOf": [
-                { "required": ["submission_basepath"] },
-                { "required": ["input"] }
+                {
+                  "required": ["submission_basepath"]
+                },
+                {
+                  "required": ["input", "genome"]
+                }
               ],
             "required": [ "outdir"],
             "properties": {
@@ -35,6 +39,14 @@
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/grzqc/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "genome": {
+                    "type": "string",
+                    "description": "Name of genome reference.",
+                    "default": "GRCh38",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "GRCh38 or GRCh37: User have to define genome",
+                    "enum": ["GRCh38", "GRCh37"]
                 },
                 "outdir": {
                     "type": "string",

@@ -61,16 +61,36 @@ workflow NFCORE_GRZQC {
 workflow {
 
     main:
+    //
+    // Check whether a submission_basepath or a samplesheet is provided
+    //
+    def submission_basepath = (params.submission_basepath && params.submission_basepath.trim() != 'null') ? params.submission_basepath : null
+    def input_samplesheet = (params.input && params.input.trim() != 'null') ? params.input : null
 
-    //
+    if( submission_basepath && input_samplesheet ) {
+        error "Please provide either --submission_basepath OR --input, not both."
+    }
+
+    if( !submission_basepath && !input_samplesheet ) {
+        error "You must provide either --submission_basepath (a directory) or --input (a samplesheet CSV)."
+    }
+
+    if( submission_basepath ) {
+
     // first step: create samplesheet from metadata.json file
-    //
     METADATA_TO_SAMPLESHEET(
         params.submission_basepath
     )
 
-    // METADATA_TO_SAMPLESHEET.out.samplesheet.view { "DEBUG: meta.Samplesheet path is: ${it}" }
-    // METADATA_TO_SAMPLESHEET.out.genome.view { "DEBUG: genome is: ${it}" }
+        ch_samplesheet = METADATA_TO_SAMPLESHEET.out.samplesheet
+        genome_string  = METADATA_TO_SAMPLESHEET.out.genome   // the process must 'export genome=...'
+    
+    } else if ( input_samplesheet ) {
+        // Use the provided samplesheet file directly
+        ch_samplesheet = Channel.of( params.input )
+        genome_string  = params.genome
+
+    } 
 
     //
     // SUBWORKFLOW: Run initialisation tasks
@@ -81,16 +101,15 @@ workflow {
         params.monochrome_logs,
         args,
         params.outdir,
-        METADATA_TO_SAMPLESHEET.out.samplesheet
+        ch_samplesheet
     )
 
-    // PIPELINE_INITIALISATION.out.samplesheet.view { "DEBUG: pipe.Samplesheet path is: ${it}" }
     //
     // WORKFLOW: Run main workflow
     //
     NFCORE_GRZQC (
         PIPELINE_INITIALISATION.out.samplesheet,
-        METADATA_TO_SAMPLESHEET.out.genome
+        genome_string
     )
     //
     // SUBWORKFLOW: Run completion tasks

@@ -158,8 +158,6 @@ workflow GRZQC {
     // for WES and panel: extract bed from samplesheet and
     //      do the conversion with the correct mapping file (if it is NCBI format, covert it to UCSC).
     // for both cases different file required for hg38 and hg19
-    ch_samplesheet.view { "DEBUG: ch_samplesheet is: ${it}" }
-
     ch_samplesheet_target = ch_samplesheet.filter { meta, fastqs, bed_file ->
         meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
     }
