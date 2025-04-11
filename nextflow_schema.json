@@ -60,6 +60,12 @@
                     "default": false,
                     "fa_icon": "fas fa-folder-open"
                 },
+                "save_reference_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Path to save fasta, fai and bwa indexes. require save_reference is true",
+                    "fa_icon": "fas fa-folder-open"
+                },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary.",

@@ -32,8 +32,8 @@ The command lines are detailed the the "Tasks" table at the bottom of the `execu
 
 ```bash
 git clone https://github.com/BfArM-MVH/GRZ_QC_Workflow.git
-output_path="path/to/analysis/dir"
-mkdir -p ${output_path}/grzqc_output
+output_basepath="path/to/analysis/dir"
+mkdir -p ${output_basepath}/grzqc_output
 ```
 
 This pipeline will automatically download the necessary _reference genomes_ and creates an _BWA index_ from them.
@@ -44,6 +44,7 @@ Therefore, it is recommended to run test_GRCh37 and test_GRCh38 profiles to set-
 ```bash
 nextflow run main.nf \
     -profile test_GRCh37,docker
+    --save_reference_path "${output_basepath}"
 ```
 
 or/and
@@ -51,11 +52,12 @@ or/and
 ```bash
 nextflow run main.nf \
     -profile test_GRCh38,docker
+    --save_reference_path "${output_basepath}"
 ```
 
 \*\*Please use replace docker with singularity or conda depending on your system. This pipeline is able to run all profiles.
 
-Now, all the necessary files are saved into _project_/_path_/references
+Now, all the necessary files are saved into _output_/_basepath_/references. In the next section you will see how can use these files and avoid rerunning the genome downloading and indexing steps.
 
 and you can delete test results safely:
 
@@ -66,30 +68,30 @@ rm -rf ${projectDir}/tests/results
 ## Usage
 This pipeline needs one of the following two inputs:
 
-1. a submission base directory path with a folder structure following [GRZ submission standard](https://github.com/BfArM-MVH/grz-cli?tab=readme-ov-file#introduction), see also [test datasets](https://www.cmm.in.tum.de/public/grz-example-submissions/).
+1. a submission base directory path with a folder structure following [GRZ submission standard](https://github.com/BfArM-MVH/grz-cli?tab=readme-ov-file#introduction). You can also check [test datasets](https://www.cmm.in.tum.de/public/grz-example-submissions/).
 
 You can run the pipeline using:
 
-2. a csv samplesheet which required headers:
-
-
 ```bash
+submission_basepath="path/to/submission/base/directory"
 nextflow run main.nf \
     -profile docker \
     --outdir "${output_basepath}/grzqc_output/" \
-    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    --submission_basepath "${submission_basepath}" \
     -c conf/grzqc_GRCh37.config
 ```
 
-or
+or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
+
+If you copy the _reference genomes_ and _BWA index_ somewhere else after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
 
 ```bash
-nextflow run main.nf \
-    -profile docker \
-    --outdir "${output_basepath}/grzqc_output/" \
-    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
-    -c conf/grzqc_GRCh38.config
+    fasta = "${outdir}/../reference/GRCh37/genome.fasta"
+    fai   = "${outdir}/../reference/GRCh37/genome.fasta.fai"
+    bwa   = "${outdir}/../reference/GRCh37/bwamem2"
 ```
+
+2. In addition to use a submission base directory path, you can also use a csv samplesheet as input. This gives more flexibilty, as you don't need a GRZ submission directory. See the [documentation](docs/usage.md).
 
 ## Pipeline output
 
