@@ -70,27 +70,6 @@ workflow GRZQC {
     thresholds  = params.thresholds ? Channel.fromPath(params.thresholds, checkIfExists: true).collect()
                                     : Channel.fromPath("${projectDir}/assets/default_files/thresholds.json").collect()
 
-<<<<<<< HEAD
-    if (!params.target){
-        if(genome == "GRCh38"){
-            target  = Channel.fromPath("${projectDir}/assets/default_files/hg38_440_omim_genes.bed", checkIfExists: true).collect()
-
-        }else{
-            target  = Channel.fromPath("${projectDir}/assets/default_files/hg19_439_omim_genes.bed", checkIfExists: true).collect()
-        }
-    } else {
-        target  = Channel.fromPath(params.target, checkIfExists: true).collect()
-    }
-
-    if(genome == "GRCh38"){
-        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg38_NCBI2UCSC.txt").collect()
-
-    }else{
-        mapping_chrom = Channel.fromPath("${projectDir}/assets/default_files/hg19_NCBI2UCSC.txt").collect()
-    }
-=======
->>>>>>> main
-
     // Creating merge fastq channel from samplesheet
 
     ch_samplesheet.map{
@@ -177,7 +156,8 @@ workflow GRZQC {
         SAVE_REFERENCE(
             fasta,
             fai,
-            bwa
+            bwa,
+            genome
         )
     }
 
