@@ -68,9 +68,13 @@ rm -rf ${projectDir}/tests/results
 ## Usage
 This pipeline needs one of the following two inputs:
 
-1. a submission base directory path with a folder structure following [GRZ submission standard](https://github.com/BfArM-MVH/grz-cli?tab=readme-ov-file#introduction). You can also check [test datasets](https://www.cmm.in.tum.de/public/grz-example-submissions/).
+1. A submission base directory path with a folder structure following [GRZ submission standard](https://github.com/BfArM-MVH/grz-cli?tab=readme-ov-file#introduction). You can also check [test datasets](https://www.cmm.in.tum.de/public/grz-example-submissions/).
 
-You can run the pipeline using:
+2. Use a csv samplesheet as input. This gives more flexibilty, as you don't need a GRZ submission directory. 
+
+Here are the instructions for the case (1). For (2) please see the [documentation](docs/usage.md#samplesheet-input).
+
+You can run the pipeline with flag `--submission_basepath`:
 
 ```bash
 submission_basepath="path/to/submission/base/directory"
@@ -83,15 +87,13 @@ nextflow run main.nf \
 
 or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
 
-If you copy the _reference genomes_ and _BWA index_ somewhere else after the test run, or you set a different `submission_basepath`, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
+If you copy the _reference genomes_ and _BWA index_ to a different location after the test run, , or you set a different `submission_basepath`, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
 
 ```bash
     fasta = "${params.outdir}/../reference/GRCh37/genome.fasta"
     fai   = "${params.outdir}/../reference/GRCh37/genome.fasta.fai"
     bwa   = "${params.outdir}/../reference/GRCh37/bwamem2"
 ```
-
-2. In addition to use a submission base directory path, you can also use a csv samplesheet as input. This gives more flexibilty, as you don't need a GRZ submission directory. See the [documentation](docs/usage.md).
 
 ## Pipeline output
 
