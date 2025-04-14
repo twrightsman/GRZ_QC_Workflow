@@ -83,12 +83,12 @@ nextflow run main.nf \
 
 or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
 
-If you copy the _reference genomes_ and _BWA index_ somewhere else after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
+If you copy the _reference genomes_ and _BWA index_ somewhere else after the test run, or you set a different `submission_basepath`, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
 
 ```bash
-    fasta = "${outdir}/../reference/GRCh37/genome.fasta"
-    fai   = "${outdir}/../reference/GRCh37/genome.fasta.fai"
-    bwa   = "${outdir}/../reference/GRCh37/bwamem2"
+    fasta = "${params.outdir}/../reference/GRCh37/genome.fasta"
+    fai   = "${params.outdir}/../reference/GRCh37/genome.fasta.fai"
+    bwa   = "${params.outdir}/../reference/GRCh37/bwamem2"
 ```
 
 2. In addition to use a submission base directory path, you can also use a csv samplesheet as input. This gives more flexibilty, as you don't need a GRZ submission directory. See the [documentation](docs/usage.md).
