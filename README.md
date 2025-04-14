@@ -44,7 +44,6 @@ Therefore, it is recommended to run test_GRCh37 and test_GRCh38 profiles to set-
 ```bash
 nextflow run main.nf \
     -profile test_GRCh37,docker
-    --save_reference_path "${output_basepath}"
 ```
 
 or/and
@@ -52,14 +51,19 @@ or/and
 ```bash
 nextflow run main.nf \
     -profile test_GRCh38,docker
-    --save_reference_path "${output_basepath}"
 ```
 
 \*\*Please use replace docker with singularity or conda depending on your system. This pipeline is able to run all profiles.
 
-Now, all the necessary files are saved into _output_/_basepath_/references. In the next section you will see how can use these files and avoid rerunning the genome downloading and indexing steps.
+Now, all the necessary files are saved into _project_/_path_/references. If you want to save the reference files to a different location during the run, you can do:
 
-and you can delete test results safely:
+```bash
+nextflow run main.nf \
+    -profile test_GRCh37,docker
+    --save_reference_path "your/reference/path"
+```
+
+In the next section you will see how can use these files and avoid rerunning the genome downloading and indexing steps. You can now delete test results safely:
 
 ```bash
 rm -rf ${projectDir}/tests/results
@@ -87,12 +91,12 @@ nextflow run main.nf \
 
 or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
 
-If you copy the _reference genomes_ and _BWA index_ to a different location after the test run, , or you set a different `submission_basepath`, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
+If you ran the test run and copied the _reference genomes_ and _BWA index_ to a different location after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
 
 ```bash
-    fasta = "${params.outdir}/../reference/GRCh37/genome.fasta"
-    fai   = "${params.outdir}/../reference/GRCh37/genome.fasta.fai"
-    bwa   = "${params.outdir}/../reference/GRCh37/bwamem2"
+    fasta = "${projectDir}/reference/GRCh37/genome.fasta"
+    fai   = "${projectDir}/reference/GRCh37/genome.fasta.fai"
+    bwa   = "${projectDir}/reference/GRCh37/bwamem2"
 ```
 
 ## Pipeline output
