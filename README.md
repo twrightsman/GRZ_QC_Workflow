@@ -90,6 +90,7 @@ There are different options to use prepared reference files to avoid rerunning t
 nextflow run main.nf \
     -profile docker \
     --outdir "${output_basepath}/grzqc_output/" \
+    --submission_basepath "${submission_basepath}" \
     --reference_path "your/reference/path/references"
 ```
 
@@ -98,8 +99,8 @@ This approach lets the pipeline automatically use the correct reference files â€
 Alternatively, one can prepare a config file for each genome. You can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config` to point the files to the correct path.
 
 ```bash
-    fasta = "your/path/to/reference/GRCh37/genome.fasta"
-    fai   = "your/path/to/reference/GRCh37/genome.fasta.fai"
+    fasta = "your/path/to/reference/GRCh37/genome.fa"
+    fai   = "your/path/to/reference/GRCh37/genome.fai"
     bwa   = "your/path/to/reference/GRCh37/bwamem2"
 ```
 and run
@@ -108,7 +109,7 @@ and run
 nextflow run main.nf \
     -profile docker \
     --outdir "${output_basepath}/grzqc_output/" \
-    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    --submission_basepath "${submission_basepath}" \
     -c conf/grzqc_GRCh37.config # or conf/grzqc_GRCh38.config
 ```
 

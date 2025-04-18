@@ -78,8 +78,8 @@ $ tree .
 The other option is to set `--fasta`, `--fai`, `--bwa` individually, or prepare config a file like this:
 
 ```bash
-    fasta = "your/path/to/reference/GRCh37/genome.fasta"
-    fai   = "your/path/to/reference/GRCh37/genome.fasta.fai"
+    fasta = "your/path/to/reference/GRCh37/genome.fa"
+    fai   = "your/path/to/reference/GRCh37/genome.fa.fai"
     bwa   = "your/path/to/reference/GRCh37/bwamem2"
 ```
 
