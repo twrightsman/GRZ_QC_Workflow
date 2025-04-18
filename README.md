@@ -91,7 +91,7 @@ nextflow run main.nf \
 
 or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
 
-If you ran the test run and copied the _reference genomes_ and _BWA index_ to a different location after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config`.
+If you ran the test run with `--save_reference_path` or you copied the _reference genomes_ and _BWA index_ to a different location after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config` to point the files to the correct path.
 
 ```bash
     fasta = "${projectDir}/reference/GRCh37/genome.fasta"

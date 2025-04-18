@@ -83,15 +83,20 @@ workflow {
     )
 
         ch_samplesheet = METADATA_TO_SAMPLESHEET.out.samplesheet
-        genome_string  = METADATA_TO_SAMPLESHEET.out.genome   // the process must 'export genome=...'
+        ch_genome  = METADATA_TO_SAMPLESHEET.out.genome  
     
     } else if ( input_samplesheet ) {
         // Use the provided samplesheet file directly
         ch_samplesheet = Channel.of( params.input )
-        genome_string  = params.genome
+        ch_genome  = Channel.of ( params.genome )
 
     } 
 
+    // genome_string.view { println "DEBUG: parsed tuple: ${it}" }
+
+    // genome_string.subscribe { value ->
+    //     println "Genome value from metadata: ${value}"
+    // }    
     //
     // SUBWORKFLOW: Run initialisation tasks
     //
@@ -109,7 +114,7 @@ workflow {
     //
     NFCORE_GRZQC (
         PIPELINE_INITIALISATION.out.samplesheet,
-        genome_string
+        ch_genome
     )
     //
     // SUBWORKFLOW: Run completion tasks

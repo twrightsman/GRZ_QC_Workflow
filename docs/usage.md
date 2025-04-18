@@ -46,6 +46,32 @@ CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
 CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
 ```
 
+## Prepare reference
+
+```bash
+$ tree .
+.
+├── GRCh37
+│   ├── bwamem2
+│   │   ├── genome.0123
+│   │   ├── genome.amb
+│   │   ├── genome.ann
+│   │   ├── genome.bwt.2bit.64
+│   │   └── genome.pac
+│   ├── genome.fa
+│   └── genome.fa.fai
+└── GRCh38
+    ├── bwamem2
+    │   ├── genome.0123
+    │   ├── genome.amb
+    │   ├── genome.ann
+    │   ├── genome.bwt.2bit.64
+    │   └── genome.pac
+    ├── genome.fa
+    └── genome.fa.fai
+
+```
+
 ## BAM input
 
 to be done.
