@@ -92,11 +92,6 @@ workflow {
 
     } 
 
-    // genome_string.view { println "DEBUG: parsed tuple: ${it}" }
-
-    // genome_string.subscribe { value ->
-    //     println "Genome value from metadata: ${value}"
-    // }    
     //
     // SUBWORKFLOW: Run initialisation tasks
     //

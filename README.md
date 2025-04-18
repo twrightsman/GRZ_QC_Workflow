@@ -36,39 +36,6 @@ output_basepath="path/to/analysis/dir"
 mkdir -p ${output_basepath}/grzqc_output
 ```
 
-This pipeline will automatically download the necessary _reference genomes_ and creates an _BWA index_ from them.
-However, when running this pipeline multiple times on different submissions, the download and indexing steps create _unnecessary overhead_.
-
-Therefore, it is recommended to run test_GRCh37 and test_GRCh38 profiles to set-up reference files and to be sure if all the necessary images and containers are settles-up correctly. Thus, depending on the reference genome you will use, run the profile:
-
-```bash
-nextflow run main.nf \
-    -profile test_GRCh37,docker
-```
-
-or/and
-
-```bash
-nextflow run main.nf \
-    -profile test_GRCh38,docker
-```
-
-\*\*Please use replace docker with singularity or conda depending on your system. This pipeline is able to run all profiles.
-
-Now, all the necessary files are saved into _project_/_path_/references. If you want to save the reference files to a different location during the run, you can do:
-
-```bash
-nextflow run main.nf \
-    -profile test_GRCh37,docker
-    --save_reference_path "your/reference/path"
-```
-
-In the next section you will see how can use these files and avoid rerunning the genome downloading and indexing steps. You can now delete test results safely:
-
-```bash
-rm -rf ${projectDir}/tests/results
-```
-
 ## Usage
 This pipeline needs one of the following two inputs:
 
@@ -85,19 +52,67 @@ submission_basepath="path/to/submission/base/directory"
 nextflow run main.nf \
     -profile docker \
     --outdir "${output_basepath}/grzqc_output/" \
-    --submission_basepath "${submission_basepath}" \
-    -c conf/grzqc_GRCh37.config
+    --submission_basepath "${submission_basepath}" 
 ```
 
-or with `-c conf/grzqc_GRCh38.config` flag for GRCh38.
+## Prepare reference files
+With the above code, the pipeline can automatically download the necessary _reference genomes_ and creates an _BWA index_ from them.
+However, when running this pipeline multiple times on different submissions, the download and indexing steps create _unnecessary overhead_.
 
-If you ran the test run with `--save_reference_path` or you copied the _reference genomes_ and _BWA index_ to a different location after the test run, you can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config` to point the files to the correct path.
+Therefore, **it is recommended** to run test_GRCh37 and test_GRCh38 profiles to set-up reference files and to be sure if all the necessary images and containers are settles-up correctly. Thus, depending on the reference genome you will use, run the profile:
 
 ```bash
-    fasta = "${projectDir}/reference/GRCh37/genome.fasta"
-    fai   = "${projectDir}/reference/GRCh37/genome.fasta.fai"
-    bwa   = "${projectDir}/reference/GRCh37/bwamem2"
+nextflow run main.nf \
+    -profile test_GRCh37,docker
+    --save_reference_path "your/reference/path"
 ```
+
+or/and
+
+```bash
+nextflow run main.nf \
+    -profile test_GRCh38,docker
+    --save_reference_path "your/reference/path"
+```
+
+\*\*Please use replace docker with singularity or conda depending on your system. This pipeline is able to run all profiles.
+
+Now, all the necessary files are saved into _your/desired/reference/path_/references. In the next section you will see how can use these files and avoid rerunning the genome downloading and indexing steps. You can now delete test results safely:
+
+```bash
+rm -rf ${projectDir}/tests/results
+```
+
+## Use reference files
+There are different options to use prepared reference files to avoid rerunning the genome downloading and bwamem indexing steps. The easiest way is to use `reference_path` parameter. If you ran the both tests above successfully, you shall see references files for both GRCh38 and GRCh37 in _your/desired/reference/path_/references. And you can run:
+
+```bash
+nextflow run main.nf \
+    -profile docker \
+    --outdir "${output_basepath}/grzqc_output/" \
+    --reference_path "your/reference/path/references"
+```
+
+This approach lets the pipeline automatically use the correct reference files — it is helpful when you submit have multiple runs containing both GRCh37 and GRCh38. If you decide to skip the test runs and prepare references files by yourself, please read this [documentation](docs/usage.md#reference-files) to have the right directory structure.
+
+Alternatively, one can prepare a config file for each genome. You can also change the lines in `conf/grzqc_GRCh37.config` and `conf/grzqc_GRCh38.config` to point the files to the correct path.
+
+```bash
+    fasta = "your/path/to/reference/GRCh37/genome.fasta"
+    fai   = "your/path/to/reference/GRCh37/genome.fasta.fai"
+    bwa   = "your/path/to/reference/GRCh37/bwamem2"
+```
+and run
+
+```bash
+nextflow run main.nf \
+    -profile docker \
+    --outdir "${output_basepath}/grzqc_output/" \
+    --input "${output_basepath}/grzqc_output/grzqc_samplesheet.csv" \
+    -c conf/grzqc_GRCh37.config # or conf/grzqc_GRCh38.config
+```
+
+A more detailed description of reference files usage can be found [here](docs/usage.md#reference-files). 
 
 ## Pipeline output
 

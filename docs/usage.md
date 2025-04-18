@@ -12,6 +12,8 @@ or with a samplesheet
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. The samplesheet requires the following columns `sample`,`labDataName`,`libraryType`,`sequenceSubtype`,`genomicStudySubtype`,`fastq_1`,`fastq_2`,`bed_file`. The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet. 
 
+You will need to give `--genome` for either "GRCh37" or"GRCh38" when using samplesheet as input.
+
 ```bash
 nextflow run main.nf \
     -profile conda \
@@ -46,7 +48,9 @@ CONTROL_REP1,AEG588A1_S1_L003_R1_001.fastq.gz,AEG588A1_S1_L003_R2_001.fastq.gz
 CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
 ```
 
-## Prepare reference
+## Reference files
+
+You can use refernces files with `nextflow run main.nf --reference_path "your/reference/path/references"`. Your refernce folder needs a directory stucture like this, with subdirectory of both GRCh37 and GRCh38. In each subdirectory, it contains a genome file, a genome index file and a folder with bwamem index. The advantage to use `--reference_path` is that the pipeline can automatically use the right genome reference, you do not have to check the genome version in your GRZ submission beforehand.
 
 ```bash
 $ tree .
@@ -69,8 +73,28 @@ $ tree .
     │   └── genome.pac
     ├── genome.fa
     └── genome.fa.fai
-
 ```
+
+The other option is to set `--fasta`, `--fai`, `--bwa` individually, or prepare config a file like this:
+
+```bash
+    fasta = "your/path/to/reference/GRCh37/genome.fasta"
+    fai   = "your/path/to/reference/GRCh37/genome.fasta.fai"
+    bwa   = "your/path/to/reference/GRCh37/bwamem2"
+```
+
+You can also set only the genome file with `--fasta <genome file>`. The pipeline will prepare the genome index and bwa index automatically.
+
+Of note, `--fasta`, `--fai`, `--bwa` will only be considered when `--reference_path` is not given. 
+
+| Parameters                                   | Description                                                             |
+| -------------------------------------------- | ----------------------------------------------------------------------- |
+| `save_reference`                             | save reference when `--save_reference true` , default null              |
+| `save_reference_path`                        | save reference path, default `${outdir}`                                |
+| `reference_path`                             | reference path , default null                                           |
+| `fasta`                                      | genome fasta path , only use when reference path is null , default null |
+| `fai`                                        | genome fai path , only use when reference path is null , default null   |
+| `bwa`                                        | bwamem index path , only use when reference path is null , default null |
 
 ## BAM input
 

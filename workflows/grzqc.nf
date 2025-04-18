@@ -96,8 +96,6 @@ workflow GRZQC {
                                         : Channel.empty()
     }  
 
-    fasta.view { println "DEBUG: fasta: ${it}" }
-
     // TARGET BED channel
     if( params.target ) {
         target = Channel.fromPath(params.target, checkIfExists: true)
@@ -127,9 +125,6 @@ workflow GRZQC {
                             return f                                   
                             }
     }
-
-    target.view { println "DEBUG: target: ${it}" }
-    mapping_chrom.view { println "DEBUG: mapping_chrom: ${it}" }
 
     // create thresholds channels
     thresholds  = params.thresholds ? Channel.fromPath(params.thresholds, checkIfExists: true)
