@@ -100,7 +100,7 @@ Alternatively, one can prepare a config file for each genome. You can also chang
 
 ```bash
     fasta = "your/path/to/reference/GRCh37/genome.fa"
-    fai   = "your/path/to/reference/GRCh37/genome.fai"
+    fai   = "your/path/to/reference/GRCh37/genome.fa.fai"
     bwa   = "your/path/to/reference/GRCh37/bwamem2"
 ```
 and run
