@@ -11,7 +11,7 @@ process CONVERT_BED_CHROM {
 
     output:
     tuple val(meta), path("*.converted_bed.bed") , emit: converted_bed
-    path('versions.yml')      , emit: versions
+    path('versions.yml')                         , emit: versions
 
     script:
     """
