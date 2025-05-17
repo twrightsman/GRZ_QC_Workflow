@@ -61,7 +61,8 @@
                 "format": "file-path",
                 "exists": true,
                 "pattern": "^\\S+\\.bed(\\.gz)?$",
-                "errorMessage": "Target bed file"
+                "errorMessage": "Target bed file",
+                "meta": ["targets"]
             },
             "reference": {
                 "type": "string",

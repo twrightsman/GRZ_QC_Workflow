@@ -1,25 +1,19 @@
 # Usage
 
-The input requires either
-
-`--submission_basepath` for GRZ submission folder
-
-or with a samplesheet
-
-`--submission_basepath` and `--genome` for broader use
+The input requires either `--submission` with a GRZ submission folder or `--samplesheet` with a CSV samplesheet, described below.
 
 ## Samplesheet input
 
-You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. Use this parameter to specify its location. The samplesheet requires the following columns `sample`,`labDataName`,`libraryType`,`sequenceSubtype`,`genomicStudySubtype`,`fastq_1`,`fastq_2`,`bed_file`. The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet.
-
-You will need to give `--genome` for either "GRCh37" or"GRCh38" when using samplesheet as input.
+You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline.
+Use `--samplesheet` to specify its location.
+The samplesheet requires the following columns: `sample`, `labDataName`, `libraryType`, `sequenceSubtype`, `genomicStudySubtype`, `fastq_1`, `fastq_2`, `bed_file`.
+The pipeline will auto-detect whether a sample is single- or paired-end using the information provided in the samplesheet.
 
 ```bash
 nextflow run main.nf \
     -profile conda \
-    --outdir "${output_basepath}/grzqc_output/" \
-    --input "samplesheet.csv" \
-    --genome "GRCh37" # or"GRCh38"
+    --outdir "path/to/output/directory/" \
+    --input "samplesheet.csv"
 ```
 
 ### Full samplesheet
@@ -50,62 +44,36 @@ CONTROL_REP1,AEG588A1_S1_L004_R1_001.fastq.gz,AEG588A1_S1_L004_R2_001.fastq.gz
 
 ## Reference files
 
-You can use refernces files with `nextflow run main.nf --reference_path "your/reference/path/references"`. Your refernce folder needs a directory stucture like this, with subdirectory of both GRCh37 and GRCh38. In each subdirectory, it contains a genome file, a genome index file and a folder with bwamem index. The advantage to use `--reference_path` is that the pipeline can automatically use the right genome reference, you do not have to check the genome version in your GRZ submission beforehand.
+You can cache reference files between runs with `nextflow run main.nf --reference_path "your/reference/path"`.
+In each subdirectory it contains a genome file in BGZF format and a folder with a bwa-mem2 index.
 
 ```bash
 $ tree .
 .
 ├── GRCh37
 │   ├── bwamem2
-│   │   ├── genome.0123
-│   │   ├── genome.amb
-│   │   ├── genome.ann
-│   │   ├── genome.bwt.2bit.64
-│   │   └── genome.pac
-│   ├── genome.fa
-│   └── genome.fa.fai
+│   │   ├── GRCh37.0123
+│   │   ├── GRCh37.amb
+│   │   ├── GRCh37.ann
+│   │   ├── GRCh37.bwt.2bit.64
+│   │   └── GRCh37.pac
+│   ├── GRCh37.fasta.gz
 └── GRCh38
     ├── bwamem2
-    │   ├── genome.0123
-    │   ├── genome.amb
-    │   ├── genome.ann
-    │   ├── genome.bwt.2bit.64
-    │   └── genome.pac
-    ├── genome.fa
-    └── genome.fa.fai
+    │   ├── GRCh38.0123
+    │   ├── GRCh38.amb
+    │   ├── GRCh38.ann
+    │   ├── GRCh38.bwt.2bit.64
+    │   └── GRCh38.pac
+    └── GRCh38.fasta.gz
 ```
-
-The other option is to set `--fasta`, `--fai`, `--bwa` individually, or prepare config a file like this:
-
-```bash
-    fasta = "your/path/to/reference/GRCh37/genome.fa"
-    fai   = "your/path/to/reference/GRCh37/genome.fa.fai"
-    bwa   = "your/path/to/reference/GRCh37/bwamem2"
-```
-
-You can also set only the genome file with `--fasta <genome file>`. The pipeline will prepare the genome index and bwa index automatically.
-
-Of note, `--fasta`, `--fai`, `--bwa` will only be considered when `--reference_path` is not given.
-
-| Parameters            | Description                                                                                     |
-| --------------------- | ----------------------------------------------------------------------------------------------- |
-| `save_reference`      | save reference when `--save_reference true` , default false                                     |
-| `save_reference_path` | save reference path, default `${outdir}`                                                        |
-| `reference_path`      | reference path , default null                                                                   |
-| `fasta`               | genome fasta path , only use when reference path is null , default null                         |
-| `fai`                 | genome fai path , only use when reference path is null and fasta is also given, default null    |
-| `bwa`                 | bwamem index path , only use when reference path is null and fasta is also given , default null |
-
-## BAM input
-
-to be done.
 
 ## Running the pipeline
 
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run main.nf --input ./samplesheet.csv --outdir ./results --genome GRCh37 -profile docker
+nextflow run main.nf --samplesheet ./samplesheet.csv --outdir ./results -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -127,7 +95,7 @@ Pipeline settings can be provided in a `yaml` or `json` file via `-params-file <
 Do not use `-c <file>` to specify parameters as this will result in errors. Custom config files specified with `-c` must only be used for [tuning process resource specifications](https://nf-co.re/docs/usage/configuration#tuning-workflow-resources), other infrastructural tweaks (such as output directories), or module arguments (args).
 :::
 
-The above pipeline run specified with a params file in yaml format:
+The above pipeline run specified with a params file in YAML format.
 
 ```bash
 nextflow run BfArM-MVH/GRZ_QC_Workflow -profile docker -params-file params.yaml
@@ -136,13 +104,10 @@ nextflow run BfArM-MVH/GRZ_QC_Workflow -profile docker -params-file params.yaml
 with:
 
 ```yaml title="params.yaml"
-input: './samplesheet.csv'
+samplesheet: './samplesheet.csv'
 outdir: './results/'
-genome: 'GRCh37'
 <...>
 ```
-
-You can also generate such `YAML`/`JSON` files via [nf-core/launch](https://nf-co.re/launch).
 
 ### Updating the pipeline
 
@@ -221,6 +186,8 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 ## Custom configuration
 
+See the main [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for more information about creating your own configuration files.
+
 ### Resource requests
 
 Whilst the default requirements set within the pipeline will hopefully work for most people and with most input data, you may find that you want to customise the compute resources that the pipeline requests. Each step in the pipeline has a default set of requirements for number of CPUs, memory and time. For most of the steps in the pipeline, if the job exits with any of the error codes specified [here](https://github.com/nf-core/rnaseq/blob/4c27ef5610c87db00c3c5a3eed10b1d161abf575/conf/base.config#L18) it will automatically be resubmitted with higher requests (2 x original, then 3 x original). If it still fails after the third attempt then the pipeline execution is stopped.
@@ -236,14 +203,6 @@ To use a different container from the default container or conda environment spe
 ### Custom Tool Arguments
 
 A pipeline might not always support every possible argument or option of a particular tool used in pipeline. Fortunately, nf-core pipelines provide some freedom to users to insert additional parameters that the pipeline does not include by default.
-
-### nf-core/configs
-
-In most cases, you will only need to create a custom config as a one-off but if you and others within your organisation are likely to be running nf-core pipelines regularly and need to use the same settings regularly it may be a good idea to request that your custom config file is uploaded to the `nf-core/configs` git repository. Before you do this please can you test that the config file works with your pipeline of choice using the `-c` parameter. You can then create a pull request to the `nf-core/configs` repository with the addition of your config file, associated documentation file (see examples in [`nf-core/configs/docs`](https://github.com/nf-core/configs/tree/master/docs)), and amending [`nfcore_custom.config`](https://github.com/nf-core/configs/blob/master/nfcore_custom.config) to include your custom profile.
-
-See the main [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html) for more information about creating your own configuration files.
-
-If you have any questions or issues please send us a message on [Slack](https://nf-co.re/join/slack) on the [`#configs` channel](https://nfcore.slack.com/channels/configs).
 
 ## Running in the background
 

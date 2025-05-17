@@ -1,4 +1,4 @@
-# BfArM-MVH/GRZ_QC_Workflow: Changelog
+# Changelog
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - update README about usage of costum config + update base.config for bwamem [#63](https://github.com/BfArM-MVH/GRZ_QC_Workflow/pull/63)
 - Add disclaimer clarifying the aim of this workflow [#61](https://github.com/BfArM-MVH/GRZ_QC_Workflow/pull/61)
 - tests on small synthetic genomes + reads [#78](https://github.com/BfArM-MVH/GRZ_QC_Workflow/pull/78)
+- simplify CLI and reference caching [#82](https://github.com/BfArM-MVH/GRZ_QC_Workflow/pull/82)
+  - allow mixed reference genomes within single submission/samplesheet
+  - cache references between runs if `--reference_path` provided
+  - remove more unneeded nf-core stuff
+  - simplify module configuration
 
 ### `Fixed`
 

@@ -1,11 +1,9 @@
-name: samtools_stats
-description: Produces comprehensive statistics from SAM/BAM/CRAM file
+name: samtools_bgzip
+description: Outputs a FASTA file compressed with the BGZF algorithm
 keywords:
-  - statistics
-  - counts
-  - bam
-  - sam
-  - cram
+  - fasta
+  - BGZF
+  - bgzip
 tools:
   - samtools:
       description: |
@@ -21,46 +19,32 @@ input:
   - - meta:
         type: map
         description: |
-          Groovy Map containing sample information
-          e.g. [ id:'test', single_end:false ]
-    - input:
-        type: file
-        description: BAM/CRAM file from alignment
-        pattern: "*.{bam,cram}"
-    - input_index:
-        type: file
-        description: BAI/CRAI file from alignment
-        pattern: "*.{bai,crai}"
-  - - meta2:
-        type: map
-        description: |
           Groovy Map containing reference information
-          e.g. [ id:'genome' ]
+          e.g. [ id:'test' ]
     - fasta:
         type: file
-        description: Reference file the CRAM was created with (optional)
-        pattern: "*.{fasta,fa}"
+        description: FASTA file, compressed or not.
+        pattern: "*.{fa,fa.gz,fa.bz2,fa.xz,fasta,fasta.gz,fasta.bz2,fasta.xz}"
 output:
-  - stats:
+  - fasta:
       - meta:
           type: map
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.stats":
-          type: file
-          description: File containing samtools stats output
-          pattern: "*.{stats}"
+          pattern: "*.{fa.gz,fasta.gz}"
+      - ${output}:
+          type: map
+          description: |
+            A FASTA file compressed with the BGZF algorithm.  It will be
+            the original file if it was already BGZF-compressed.
+          pattern: "*.{fa.gz,fasta.gz}"
   - versions:
       - versions.yml:
           type: file
           description: File containing software versions
           pattern: "versions.yml"
 authors:
-  - "@drpatelh"
-  - "@FriederikeHanssen"
-  - "@ramprasadn"
+  - "@charles-plessy"
 maintainers:
-  - "@drpatelh"
-  - "@FriederikeHanssen"
-  - "@ramprasadn"
+  - "@charles-plessy"
