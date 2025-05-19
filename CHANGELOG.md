@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### `Deprecated`
 
+- pytest [#84](https://github.com/BfArM-MVH/GRZ_QC_Workflow/pull/84)
+
 ## v0.2.0-alpha - [19.03.2025]
 
 Initial release of nf-core/grzqc, created with the nf-core template.
