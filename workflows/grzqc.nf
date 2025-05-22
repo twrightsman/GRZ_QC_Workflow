@@ -7,7 +7,6 @@
 include { paramsSummaryMap                } from 'plugin/nf-schema'
 include { paramsSummaryMultiqc            } from '../subworkflows/nf-core/utils_nfcore_pipeline'
 include { softwareVersionsToYAML          } from '../subworkflows/nf-core/utils_nfcore_pipeline'
-include { CAT_FASTQ                       } from '../modules/nf-core/cat/fastq'
 include { FASTQC                          } from '../modules/nf-core/fastqc'
 include { FASTP                           } from '../modules/nf-core/fastp'
 include { MULTIQC                         } from '../modules/nf-core/multiqc'
@@ -120,9 +119,9 @@ workflow GRZQC {
 
     // TARGET BED channel
     if( params.target ) {
-        target = Channel.fromPath(params.target, checkIfExists: true).collect()
+        ch_target = Channel.fromPath(params.target, checkIfExists: true).collect()
     } else {
-        target = ch_genome
+        ch_target = ch_genome
                         .flatMap { genome ->
                         def defaultTargetCh = genome == 'GRCh38'
                             ? "${projectDir}/assets/default_files/hg38_440_omim_genes.bed"
@@ -148,68 +147,35 @@ workflow GRZQC {
                             }.collect()
     }
 
-    // create thresholds channels
+    // Create thresholds channels
     ch_thresholds  = params.thresholds ? Channel.fromPath(params.thresholds, checkIfExists: true).collect()
                                     : Channel.fromPath("${projectDir}/assets/default_files/thresholds.json").collect()
     
-    // Creating merge fastq channel from samplesheet
-
-    ch_samplesheet.map{
-        meta, fastqs, bed_file -> tuple(meta, fastqs)
-    }.branch {
-            meta, fastqs ->
-                single_sample_paired_end  : fastqs.size() < 2 | fastqs.size() == 2
-                    return [ meta, fastqs.flatten() ]
-                multiple_sample_paired_end: fastqs.size() > 2
-                    return [ meta, fastqs.flatten() ]
-        }.set{
-            ch_fastqs
-        }
-
-    //
-    // MODULE: Concatenate FastQ files from same sample if required
-    //
-    CAT_FASTQ (
-        ch_fastqs.multiple_sample_paired_end
-    )
-    ch_versions = ch_versions.mix(CAT_FASTQ.out.versions)
-
-    CAT_FASTQ.out.reads
-        .mix(ch_fastqs.single_sample_paired_end)
-        .set { ch_cat_fastq }
-
-    //
-    // MODULE: Run FastQC
-    //
+    // Run FASTQC on FASTQ files - per lane
     FASTQC (
-        ch_cat_fastq
+        ch_samplesheet
     )
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]})
     ch_versions = ch_versions.mix(FASTQC.out.versions)
 
-    //
-    // MODULE: FASTP
-    //
+    // Run FASP on FASTQ files - per lane
     save_trimmed_fail = false
     save_merged = false
     FASTP(
-        ch_cat_fastq,
+        ch_samplesheet,
         [], // we are not using any adapter fastas at the moment
         false, // we don't use discard_trimmed_pass at the moment
         save_trimmed_fail,
         save_merged
     )
-
     ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.json.collect{ meta, json -> json })
     ch_multiqc_files = ch_multiqc_files.mix(FASTP.out.html.collect{ meta, html -> html })
     ch_versions = ch_versions.mix(FASTP.out.versions)
 
-    ch_bams = Channel.empty()
-
-
     if ( !params.reference_path ) {
 
         if ( !params.bwa ) {
+            // create bwa index if not provided
             BWAMEM2_INDEX(
                 fasta)
 
@@ -217,6 +183,7 @@ workflow GRZQC {
             bwa = BWAMEM2_INDEX.out.index
         }
         if ( !params.fai ) {
+            // create fai index if not provided
             SAMTOOLS_FAIDX(
                 fasta,
                 [[],[]],
@@ -228,9 +195,6 @@ workflow GRZQC {
 
         if ( params.save_reference ) {
             // save reference for the first run
-            //
-            // MODULE: SAVE_REFERENCE
-            //
             SAVE_REFERENCE(
                 fasta,
                 fai,
@@ -239,13 +203,9 @@ workflow GRZQC {
         }
     }
 
-    //
-    // SUBWORKFLOW: FASTQ_ALIGN_BWA_MARKDUPLICATES
-    //
-
-    // alignment analysis and markduplicates
+    // align FASTQs per lane, merge, and sort
     FASTQ_ALIGN_BWA_MARKDUPLICATES (
-        ch_cat_fastq,
+        ch_samplesheet,
         bwa,
         true,
         fasta,
@@ -258,98 +218,82 @@ workflow GRZQC {
     ch_bams =  FASTQ_ALIGN_BWA_MARKDUPLICATES.out.bam.join(FASTQ_ALIGN_BWA_MARKDUPLICATES.out.bai, by:0)
 
     // prepare mosdepth inputs
-    // Prepare bed files
     // for WGS: defined bed files of ~400 genes
     // for WES and panel: extract bed from samplesheet and
     //      do the conversion with the correct mapping file (if it is NCBI format, covert it to UCSC).
     // for both cases different file required for hg38 and hg19
-    ch_samplesheet_target = ch_samplesheet.filter { meta, fastqs, bed_file ->
-        meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
-    }
 
-    ch_samplesheet_wgs = ch_samplesheet.filter { meta, fastqs, bed_file ->
-        meta.libraryType in ["wgs", "wgs_lr"]
-    }
+    ch_bams.branch {
+        meta, bam, bai ->
+            targeted: meta.libraryType in ["wes", "panel", "wes_lr", "panel_lr"]
+                return [ meta, bam, bai, meta.bed_file ]
+            wgs:      meta.libraryType in ["wgs", "wgs_lr"]
+                return [ meta, bam, bai ]
+    }.set { ch_bams_bed }
 
-    // --- For target samples: prepare bed for conversion ---
-    ch_samplesheet_target
-    .flatMap { meta, fastqs, bed_list ->
-        bed_list.unique().collect { bedPath ->
-            tuple(meta, file(bedPath))
-        }
-    }.set{ch_bed_for_conversion_target}
-   
-    //
-    // MODULE: CONVERT_BED_CHROM
-    //
+    // convert given bed files to UCSC style names
     // for WES and panel, run the conversion process: if the bed file has NCBI-style names, they will be converted.
-
     CONVERT_BED_CHROM (
-        ch_bed_for_conversion_target,
+        ch_bams_bed.targeted.map{meta, bam, bai, bed_file -> [meta, bed_file ]},
         mapping_chrom
     )
     ch_converted_bed = CONVERT_BED_CHROM.out.converted_bed
     ch_versions = ch_versions.mix(CONVERT_BED_CHROM.out.versions)
 
-    // Prepare mosdepth inputs for target samples
-    ch_mosdepth_input_target = ch_samplesheet_target
-        .map { meta, fastqs, bed_file -> [meta] }
-        .join(ch_bams, by: 0)
-        .join(ch_converted_bed, by: 0)
+    ch_bams_bed.targeted.join(ch_converted_bed).map{meta, bam, bai, old_bed, converted_bed -> 
+                                            def newMeta = meta.clone()
+                                            newMeta.remove('bed_file')
+                                            [ newMeta, bam, bai, converted_bed ]}
+                                            .set{ch_bams_bed_targeted}
 
+    ch_bams_bed.wgs.combine(ch_target).map{meta, bam, bai, bed_file -> 
+                                            def newMeta = meta.clone()
+                                            newMeta.remove('bed_file')
+                                            [ newMeta, bam, bai, bed_file ]}
+                                            .set{ch_bams_bed_wgs}
 
-    // --- Prepare mosdepth inputs for WGS samples ---
-    ch_mosdepth_input_wgs = ch_samplesheet_wgs
-        .map { meta, fastqs, bed_file -> [meta] }
-        .join(ch_bams, by: 0)
-        .combine(target)
-
-    // --- Merge the two sets of mosdepth inputs ---
-    ch_mosdepth_input_target
-        .mix(ch_mosdepth_input_wgs)
-        .set{ch_mosdepth_input}
-
-    //
-    // MODULE: MOSDEPTH
-    //
+    // Run mosdepth to get coverages
     MOSDEPTH(
-        ch_mosdepth_input,
+        ch_bams_bed_targeted.mix(ch_bams_bed_wgs),
         fasta,
     )
     ch_versions = ch_versions.mix(MOSDEPTH.out.versions)
     ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH.out.global_txt.map{meta, file -> file}.collect())
     ch_multiqc_files = ch_multiqc_files.mix(MOSDEPTH.out.regions_txt.map{meta, file -> file}.collect())
 
-    // collect the results for comparison
+    // Remove laneId, read_group, flowcellId, bed_file from the metadata to enable sample based grouping
+    FASTP.out.json.map{meta, json ->
+            def newMeta = meta.clone()
+            newMeta.remove('laneId')
+            newMeta.remove('read_group')
+            newMeta.remove('flowcellId')
+            newMeta.remove('bed_file')
+            [ newMeta, json ]
+            }.set { ch_fastp_mosdepth }
+
+    // Collect the results for comparison
     MOSDEPTH.out.summary_txt.join(MOSDEPTH.out.regions_bed, by:0)
-        .join(FASTP.out.json, by:0)
-        .map{meta, summary, json, bed -> tuple(meta, json, summary,bed)}
+        .join(ch_fastp_mosdepth.groupTuple(), by:0)
         .set{ch_fastp_mosdepth_merged}
 
-    //
-    // MODULE:COMPARE_THRESHOLD
-    //
-    //Compare coverage with thresholds: writing the results file
-    // input: FASTP Q30 ratio + mosdepth all genes + mosdepth target genes
-    //
 
+    // Compare coverage with thresholds: writing the results file
+    // input: FASTP Q30 ratio + mosdepth all genes + mosdepth target genes
     COMPARE_THRESHOLD(
         ch_fastp_mosdepth_merged,
         ch_thresholds
     )
     ch_versions = ch_versions.mix(COMPARE_THRESHOLD.out.versions)
 
-    //
-    // MODULE: MERGE_REPORTS
-    //
+
+    // Merge compare_threshold results for a final report
     MERGE_REPORTS(
-        COMPARE_THRESHOLD.out.result_csv.collect())
+        COMPARE_THRESHOLD.out.result_csv.collect()
+        )
 
     ch_versions = ch_versions.mix(MERGE_REPORTS.out.versions)
 
-    //
     // Collate and save software versions
-    //
     softwareVersionsToYAML(ch_versions)
         .collectFile(
             storeDir: "${params.outdir}/pipeline_info",
@@ -388,7 +332,7 @@ workflow GRZQC {
     )
 
     emit:multiqc_report = MULTIQC.out.report.toList() // channel: /path/to/multiqc_report.html
-    versions       = ch_versions                 // channel: [ path(versions.yml) ]
+    versions       = ch_versions                      // channel: [ path(versions.yml) ]
 
 }
 

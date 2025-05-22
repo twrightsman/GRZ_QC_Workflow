@@ -1,7 +1,7 @@
-name: samtools_sort
-description: Sort SAM/BAM/CRAM file
+name: samtools_merge
+description: Merge BAM or CRAM file
 keywords:
-  - sort
+  - merge
   - bam
   - sam
   - cram
@@ -22,9 +22,9 @@ input:
         description: |
           Groovy Map containing sample information
           e.g. [ id:'test', single_end:false ]
-    - bam:
+    - input_files:
         type: file
-        description: BAM/CRAM/SAM file(s)
+        description: BAM/CRAM file
         pattern: "*.{bam,cram,sam}"
   - - meta2:
         type: map
@@ -33,9 +33,17 @@ input:
           e.g. [ id:'genome' ]
     - fasta:
         type: file
-        description: Reference genome FASTA file
-        pattern: "*.{fa,fasta,fna}"
-        optional: true
+        description: Reference file the CRAM was created with (optional)
+        pattern: "*.{fasta,fa}"
+  - - meta3:
+        type: map
+        description: |
+          Groovy Map containing reference information
+          e.g. [ id:'genome' ]
+    - fai:
+        type: file
+        description: Index of the reference file the CRAM was created with (optional)
+        pattern: "*.fai"
 output:
   - bam:
       - meta:
@@ -43,9 +51,9 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.bam":
+      - ${prefix}.bam:
           type: file
-          description: Sorted BAM file
+          description: BAM file
           pattern: "*.{bam}"
   - cram:
       - meta:
@@ -53,20 +61,10 @@ output:
           description: |
             Groovy Map containing sample information
             e.g. [ id:'test', single_end:false ]
-      - "*.cram":
+      - ${prefix}.cram:
           type: file
-          description: Sorted CRAM file
+          description: CRAM file
           pattern: "*.{cram}"
-  - crai:
-      - meta:
-          type: map
-          description: |
-            Groovy Map containing sample information
-            e.g. [ id:'test', single_end:false ]
-      - "*.crai":
-          type: file
-          description: CRAM index file (optional)
-          pattern: "*.crai"
   - csi:
       - meta:
           type: map
@@ -77,6 +75,16 @@ output:
           type: file
           description: BAM index file (optional)
           pattern: "*.csi"
+  - crai:
+      - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. [ id:'test', single_end:false ]
+      - "*.crai":
+          type: file
+          description: CRAM index file (optional)
+          pattern: "*.crai"
   - versions:
       - versions.yml:
           type: file
@@ -84,9 +92,13 @@ output:
           pattern: "versions.yml"
 authors:
   - "@drpatelh"
-  - "@ewels"
-  - "@matthdsm"
+  - "@yuukiiwa "
+  - "@maxulysse"
+  - "@FriederikeHanssen"
+  - "@ramprasadn"
 maintainers:
   - "@drpatelh"
-  - "@ewels"
-  - "@matthdsm"
+  - "@yuukiiwa "
+  - "@maxulysse"
+  - "@FriederikeHanssen"
+  - "@ramprasadn"
