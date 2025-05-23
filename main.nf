@@ -29,12 +29,10 @@ workflow {
         )
 
         ch_samplesheet = METADATA_TO_SAMPLESHEET.out.samplesheet
-        ch_genome = METADATA_TO_SAMPLESHEET.out.genome
     }
     else if (input_samplesheet) {
         // Use the provided samplesheet file directly
         ch_samplesheet = Channel.of(params.input)
-        ch_genome = Channel.of(params.genome)
     }
 
     //
@@ -76,6 +74,12 @@ workflow {
         }
         .set { ch_samplesheet }
 
+    if (params.genome) {
+        ch_genome = Channel.of(params.genome)
+    }
+    else {
+        ch_genome = ch_samplesheet.map { meta, _reads -> meta.reference }.unique().first()
+    }
 
     GRZQC(
         ch_samplesheet,
