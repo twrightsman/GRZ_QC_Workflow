@@ -55,23 +55,26 @@ workflow {
         .flatMap { samplesheet ->
             samplesheetToList(samplesheet.toString(), "${projectDir}/assets/schema_input.json")
         }
-        .map { meta, fastq_1, fastq_2, alignment ->
-            def read_group = "@RG\\tID:${fastq_1.simpleName}_${meta.laneId}\\tPL:${meta.sequencer}\\tSM:${meta.id}"
-            def single_end = !fastq_2
-            def fastqs = single_end ? [fastq_1] : [fastq_1, fastq_2]
+        .map { meta, reads, reads_paired, alignment ->
+            def read_group = "@RG\\tID:${reads.simpleName}_${meta.subsample}\\tPL:${meta.sequencer}\\tSM:${meta.id}"
+            if (reads_paired) {
+                read_group = "@RG\\tID:${reads.simpleName}_${meta.laneId}\\tPL:${meta.sequencer}\\tSM:${meta.id}"
+            }
+            def single_end = !reads_paired
+            def read_files = single_end ? [reads] : [reads, reads_paired]
 
             return [
                 meta + [
                     single_end: single_end,
                     read_group: read_group,
                 ],
-                fastqs,
+                read_files,
                 alignment,
             ]
         }
         .groupTuple()
-        .map { meta, fastqs, alignment ->
-            return [meta, fastqs.flatten(), alignment]
+        .map { meta, read_files, alignment ->
+            return [meta, read_files.flatten(), alignment]
         }
         .set { ch_samplesheet }
 
@@ -82,8 +85,11 @@ workflow {
         ch_genome = ch_samplesheet.map { meta, _reads, _alignments -> meta.reference }.unique().first()
     }
 
+    ch_samplesheet.view()
+
+    /*
     GRZQC(
         ch_samplesheet,
         ch_genome,
-    )
+    )*/
 }

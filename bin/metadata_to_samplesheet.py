@@ -43,7 +43,7 @@ def main(submission_root: Path):
                     match file.file_type:
                         case FileType.bed:
                             targets = file.file_path
-                        case FileType.fastq:
+                        case FileType.fastq | FileType.bam:
                             read_files.append(file)
 
                 if read_files:
@@ -59,7 +59,7 @@ def main(submission_root: Path):
                     else:
                         subsamples = ((r, None) for r in read_files)
 
-                    for reads1, reads2 in subsamples:
+                    for i, (reads1, reads2) in enumerate(subsamples):
 
                         def resolve(p: Path) -> str:
                             return (
@@ -71,6 +71,7 @@ def main(submission_root: Path):
                         samples.append(
                             {
                                 "sample": sanitize(sample_id),
+                                "subsample": i,
                                 "laneId": reads1.lane_id,
                                 "flowcellId": reads1.flowcell_id,
                                 "labDataName": sanitize(lab_datum.lab_data_name),
@@ -82,8 +83,9 @@ def main(submission_root: Path):
                                 "sequencerManufacturer": sanitize(
                                     lab_datum.sequencer_manufacturer
                                 ),
-                                "fastq_1": resolve(reads1.file_path),
-                                "fastq_2": resolve(
+                                "reads": resolve(reads1.file_path),
+                                "reads_filetype": reads1.file_type,
+                                "reads_paired": resolve(
                                     None if reads2 is None else reads2.file_path
                                 ),
                                 "bed_file": resolve(targets),

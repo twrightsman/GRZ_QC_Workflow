@@ -20,6 +20,12 @@
                 "errorMessage": "Sample name must be provided and cannot contain spaces",
                 "meta": ["id"]
             },
+            "subsample": {
+                "type": "integer",
+                "minimum": 0,
+                "errorMessage": "Subsample IDs must be positive integers.",
+                "meta": ["subsample"]
+            },
             "labDataName": {
                 "type": "string",
                 "meta": ["labDataName"]
@@ -64,19 +70,22 @@
                 "errorMessage": "Sequencer manufacturer",
                 "meta": ["flowcellId"]
             },
-            "fastq_1": {
+            "reads": {
                 "type": "string",
                 "format": "file-path",
                 "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 1 must be provided, cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "errorMessage": "At least one read file must be provided per sample."
             },
-            "fastq_2": {
+            "reads_filetype": {
+                "type": "string",
+                "pattern": "^(bam|fastq)$",
+                "errorMessage": "The file type of the reads must be bam or fastq.",
+                "meta": ["reads_filetype"]
+            },
+            "reads_paired": {
                 "type": "string",
                 "format": "file-path",
-                "exists": true,
-                "pattern": "^\\S+\\.f(ast)?q\\.gz$",
-                "errorMessage": "FastQ file for reads 2 cannot contain spaces and must have extension '.fq.gz' or '.fastq.gz'"
+                "exists": true
             },
             "aligned_reads": {
                 "type": "string",
@@ -130,17 +139,18 @@
         },
         "oneOf": [
             {
-                "required": ["fastq_1"],
+                "required": ["reads"],
                 "not": {
                     "required": ["aligned_reads"]
                 }
             },
-            { "required": ["aligned_reads"], "not": { "required": ["fastq_1"] } }
+            { "required": ["aligned_reads"], "not": { "required": ["reads"] } }
         ],
         "dependentRequired": {
-            "fastq_2": ["fastq_1"],
+            "reads_paired": ["reads", "laneId", "flowcellId"],
+            "reads": ["reads_filetype"],
             "fastp_json": ["aligned_reads"]
         },
-        "required": ["sample"]
+        "required": ["sample", "subsample"]
     }
 }
